@@ -50,11 +50,14 @@ def main():
     scheduler = config['scheduler']
     in_slurm = bool(os.environ.get('SLURM_JOB_ID'))
     if scheduler['auto_submit'] and not in_slurm and not args.in_allocation and shutil.which('sbatch'):
-        # Only lightweight submission happens on the login node. All setup/audit/GPU work is inside the job.
-        from monkey_textdet.common import utc_stamp
+        # Only filename/path discovery and submission happen on login; image/hash/model work stays in the job.
+        from monkey_textdet.common import utc_stamp, save_json
+        from monkey_textdet.data import discover_inputs
+        discovered=discover_inputs(dataset_parent,config['data'],exclude=[workspace,REPO])
         log_dir = workspace / config['run_name'] / 'logs' / 'slurm_all_experiments'
         log_dir.mkdir(parents=True, exist_ok=True)
         stamp = utc_stamp()
+        save_json(log_dir/(stamp+'__dataset_file_locations_verified_before_submit.json'),discovered)
         script = log_dir / f'{stamp}__submit_all_phase3_experiments_normal.sh'
         command = [sys.executable, '-u', str(Path(__file__).resolve()), '--in-allocation',
                    '--config', str(config_path), '--workspace', str(workspace)]
@@ -70,6 +73,8 @@ def main():
                '--signal=B:USR1@180',
                '--output=' + str(log_dir / (stamp + '__all_phase3_experiments__job_%j.stdout.log')),
                '--error=' + str(log_dir / (stamp + '__all_phase3_experiments__job_%j.stderr.log')), str(script)]
+        if scheduler.get('qos'):
+            cmd.insert(-1,'--qos='+scheduler['qos'])
         job = subprocess.check_output(cmd, text=True).strip()
         print('Submitted ONE job for the complete experiment suite:', job)
         print('Slurm logs:', log_dir)

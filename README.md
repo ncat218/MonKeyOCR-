@@ -66,6 +66,7 @@ Mặc định của `configs/phase3_h200_normal.json`:
 | Tham số Slurm | Giá trị |
 |---|---|
 | Account / partition | `uit` / `normal` |
+| QoS | `mig2-35` theo danh sách quyền tài khoản server đã cung cấp |
 | GPU MIG | `gpu:2g.35gb:1` |
 | CPU / RAM hệ thống | 8 CPU / 40 GB |
 | Thời gian yêu cầu | 68 giờ, dưới giới hạn 72 giờ/job trong hướng dẫn |
@@ -150,6 +151,8 @@ Files trong thư mục metric giữ tên chuẩn `metrics.json`, `per_image.json
 Bảng cuối: `RESULTS__phase3_dbnet_monkeyocrv2_as__global_2x2_E1_E2.md` và `comparison__all_experiments__precision_recall_hmean_small_text_recall.csv`. JSON chứa metric đầy đủ, clean/degraded gap CI và CI cải thiện Hmean từng phương pháp so với E0. Tiled latency ghi rõ khi cộng thời gian global đã cache với thời gian các ô mới đo.
 
 ## Resume và gián đoạn
+
+Trước khi submit, runner chỉ kiểm tra vị trí các file metadata trong ba thư mục đã chọn. Nếu thiếu metadata của `textvqa_degraded_10k`, nó dừng ngay tại login node và không gửi job GPU. Chưa load annotation JSON, hash toàn ảnh hay chạy model ở bước kiểm tra tên file này. Audit nội dung và toàn bộ tính toán vẫn ở trong allocation.
 
 Chạy lại **cùng lệnh** `python run_all.py`. Nếu ở login node, nó submit một allocation mới; tuân thủ quy định tần suất submit của HPC. Không có vòng lặp tự submit vô hạn. Trong một run_name, chương trình:
 
