@@ -5,4 +5,5 @@ yapf==0.43.0
 rich==15.0.0
 PyYAML==6.0.3
 termcolor==3.3.0
+packaging>=23
 regex; sys_platform == 'win32'
