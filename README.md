@@ -17,31 +17,33 @@ git clone https://github.com/ncat218/MonKeyOCR-.git
 cd MonKeyOCR-
 ```
 
-Trong `run_all.py`, có đúng một dòng dành cho vị trí dữ liệu sẽ cung cấp sau:
+Đã điền đường dẫn server Tuấn cung cấp trong `run_all.py`:
 
 ```python
-DATASET_PARENT = "/datastore/<username>/thu_muc_cha_chua_ba_dataset"
+DATASET_PARENT = "/datastore/dungmt/textvqa/data/benchmark_v1/raw/"
 ```
 
-Đây là **thư mục cha**, không phải đường dẫn gốc trên máy Windows hoặc mount `/kaggle/input`. Tên các thư mục dataset có thể khác nhau. Code tìm theo các file nhận dạng thực tế:
+Đây là **thư mục cha**, không phải đường dẫn gốc trên máy Windows hoặc mount `/kaggle/input`. Cấu hình mặc định khoanh vùng đúng ba thư mục dưới đây, rồi tìm file nhận dạng bên trong, kể cả khi file còn nằm trong nhiều cấp thư mục sau giải nén:
 
-| Dataset | File nhận dạng |
-|---|---|
-| TextVQA clean | `TextVQA_0.5.1_train.json` và ảnh nguồn |
-| TextOCR ground truth | `TextOCR_0.1_train.json` |
-| Bộ suy thoái 10K đã tạo | `main/image_manifest.csv`, `config/frozen_degradation_config.json`, `metadata/locked_eval_manifest.csv`, ảnh MAIN |
+| Thư mục con trên server | Dataset | File nhận dạng |
+|---|---|---|
+| `textvqa_clean` | TextVQA clean | `TextVQA_0.5.1_train.json` và ảnh nguồn |
+| `textocr_0_1_train_json` | TextOCR ground truth | `TextOCR_0.1_train.json` |
+| `textvqa_degraded_10k` | Bộ suy thoái 10K đã tạo | `main/image_manifest.csv`, `config/frozen_degradation_config.json`, `metadata/locked_eval_manifest.csv`, ảnh MAIN |
 
-Ví dụ layout (tên thư mục ngoài cùng có thể đổi):
+Thư mục `textvqa_degraded` bị loại khỏi tìm kiếm. Nếu thiếu bản `textvqa_degraded_10k`, code dừng thay vì lấy bộ cũ để chạy tiếp. Việc này được kiểm thử riêng. Không cần điền lại đường dẫn khi clone repo về server đúng layout đã cung cấp.
+
+Ví dụ cấu trúc bên trong (các cấp giải nén chưa được kiểm tra trực tiếp trên server):
 
 ```text
-thu_muc_cha_chua_ba_dataset/
-├── clean_textvqa_duoc_upload/
+/datastore/dungmt/textvqa/data/benchmark_v1/raw/
+├── textvqa_clean/
 │   └── textvqa/
 │       ├── TextVQA_0.5.1_train.json
 │       └── train_images/...
-├── textocr_annotation_duoc_upload/
+├── textocr_0_1_train_json/
 │   └── TextOCR_0.1_train.json
-└── degraded_duoc_upload/
+└── textvqa_degraded_10k/
     └── textvqa_realistic_v2_10k/
         ├── main/image_manifest.csv
         ├── main/images/realistic_mix/L2/...
@@ -51,7 +53,7 @@ thu_muc_cha_chua_ba_dataset/
 
 Ảnh clean mặc định nằm dưới thư mục chứa TextVQA JSON; degraded root được suy từ `main/image_manifest.csv`. Nếu server tách JSON và ảnh sang các ổ khác nhau, dùng trường đường dẫn tương ứng trong `configs/phase3_h200_normal.json`. Không thay ID hay sửa manifest nguồn để vá đường dẫn.
 
-Để trống dòng trên thì code thử `/datastore/<username>` và `/datastore/shared`. Cũng có thể dùng biến `TEXTDET_DATA_PARENT` hoặc đối số `--dataset-parent`; **không bắt buộc** dùng các cách này. Nếu có nhiều bản dataset, code liệt kê candidates và dừng; không tự chọn bản đầu tiên. Code kiểm tra hash ảnh và metadata khi ánh xạ đường dẫn cũ sang server.
+Nếu sau này chuyển dữ liệu, đổi dòng `DATASET_PARENT`; nếu đổi tên các thư mục con, sửa `data.dataset_subdirectories` trong config. Cũng có thể dùng biến `TEXTDET_DATA_PARENT` hoặc đối số `--dataset-parent`; **không bắt buộc** dùng các cách này. Nếu có nhiều bản dataset trong cùng vùng đã chọn, code liệt kê candidates và dừng; không tự chọn bản đầu tiên. Code kiểm tra hash ảnh và metadata khi ánh xạ đường dẫn cũ sang server. Chỉ khi không có parent được khai báo qua bất kỳ cách nào thì code thử `/datastore/<username>` và `/datastore/shared`.
 
 Repo **không tải hoặc tạo lại ba dataset**. Người dùng đưa chúng lên server trước. Không upload ảnh, annotation JSON gốc, token Kaggle, checkpoints hoặc kết quả thí nghiệm vào repo public.
 

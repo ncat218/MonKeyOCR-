@@ -19,25 +19,41 @@ def discover_inputs(parent, overrides, exclude=()):
         raise FileNotFoundError('Set DATASET_PARENT in run_all.py to the parent containing the three uploaded datasets.')
     blocked={Path(p).resolve() for p in exclude}
     found={'clean_json':set(),'textocr_json':set(),'main_image_manifest':set()}
-    for root in roots:
-        for folder,dirs,files in os.walk(root):
-            base=Path(folder)
-            dirs[:]=[d for d in dirs if d not in PRUNE_NAMES and not d.startswith('_workspace')
-                     and (base/d).resolve() not in blocked]
-            if 'TextVQA_0.5.1_train.json' in files:found['clean_json'].add((base/'TextVQA_0.5.1_train.json').resolve())
-            if 'TextOCR_0.1_train.json' in files:found['textocr_json'].add((base/'TextOCR_0.1_train.json').resolve())
-            if base.name=='main' and 'image_manifest.csv' in files:
-                found['main_image_manifest'].add((base/'image_manifest.csv').resolve())
+    subdirectories=overrides.get('dataset_subdirectories',{})
+    excluded=set(overrides.get('excluded_dataset_directories',[]))
+    filenames=dict(clean_json='TextVQA_0.5.1_train.json',textocr_json='TextOCR_0.1_train.json',
+                   main_image_manifest='image_manifest.csv')
+    searched={}
+    for name in found:
+        if overrides.get(name):
+            searched[name]=[]
+            continue
+        relative=Path(subdirectories.get(name,''))
+        if relative.is_absolute() or '..' in relative.parts:
+            raise ValueError('Dataset subdirectories must be relative to DATASET_PARENT; use file overrides for absolute paths')
+        scopes=[root/relative for root in roots]
+        searched[name]=[str(p) for p in scopes]
+        # A missing configured 10K folder must never fall back to the older degraded dataset.
+        for scope in scopes:
+            for folder,dirs,files in os.walk(scope):
+                base=Path(folder)
+                dirs[:]=[d for d in dirs if d not in PRUNE_NAMES and d not in excluded
+                         and not d.startswith('_workspace') and (base/d).resolve() not in blocked]
+                filename=filenames[name]
+                if filename in files and (name!='main_image_manifest' or base.name=='main'):
+                    found[name].add((base/filename).resolve())
     result={}
     for name,paths in found.items():
         choices=[Path(overrides[name]).expanduser().resolve()] if overrides.get(name) else sorted(paths)
         if len(choices)!=1 or not choices[0].is_file():
-            raise RuntimeError(f'{name}: expected one real input; candidates={[str(p) for p in choices]}. '
+            raise RuntimeError(f'{name}: expected one real input; searched={searched[name]}; candidates={[str(p) for p in choices]}. '
                                'Use the corresponding data override if multiple dataset versions exist.')
         result[name]=str(choices[0])
     result['clean_images_root']=str(Path(overrides['clean_images_root']).expanduser().resolve()) if overrides.get('clean_images_root') else str(Path(result['clean_json']).parent)
     result['degraded_root']=str(Path(overrides['degraded_root']).expanduser().resolve()) if overrides.get('degraded_root') else str(Path(result['main_image_manifest']).parent.parent)
     result['searched_parents']=[str(p) for p in roots]
+    result['searched_dataset_subdirectories']=searched
+    result['excluded_dataset_directories']=sorted(excluded)
     return result
 
 

@@ -18,6 +18,12 @@
     "build_jobs": 4
   },
   "data": {
+    "dataset_subdirectories": {
+      "clean_json": "textvqa_clean",
+      "textocr_json": "textocr_0_1_train_json",
+      "main_image_manifest": "textvqa_degraded_10k"
+    },
+    "excluded_dataset_directories": ["textvqa_degraded"],
     "clean_json": "",
     "textocr_json": "",
     "main_image_manifest": "",

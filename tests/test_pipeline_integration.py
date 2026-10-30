@@ -20,7 +20,9 @@ from monkey_textdet.vendor import shared_manifest as sm
 
 
 def miniature_dataset(parent):
-    clean=parent/'renamed clean';deg=parent/'renamed degraded';gt=parent/'renamed TextOCR'
+    clean=parent/'textvqa_clean';deg=parent/'textvqa_degraded_10k';gt=parent/'textocr_0_1_train_json'
+    obsolete=parent/'textvqa_degraded/main/image_manifest.csv'
+    obsolete.parent.mkdir(parents=True);obsolete.write_text('obsolete dataset must not be selected')
     records=[];selection=[];imgs={};anns={};mapping={}
     for i in range(12):
         source=f'fixture_{i:02d}';cp=clean/'train_images'/f'{source}.png';dp=deg/'main/images/realistic_mix/L2'/f'{source}.png'

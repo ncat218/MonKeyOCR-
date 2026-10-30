@@ -11,8 +11,8 @@ import shutil
 import subprocess
 import sys
 
-# THE ONE DATA LOCATION LINE. Set this later to the parent containing all three datasets.
-DATASET_PARENT = ""
+# THE ONE DATA LOCATION LINE. Server parent supplied by Tuan; nested files are discovered.
+DATASET_PARENT = "/datastore/dungmt/textvqa/data/benchmark_v1/raw/"
 
 REPO = Path(__file__).resolve().parent
 sys.path.insert(0, str(REPO / 'src'))

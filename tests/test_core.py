@@ -89,6 +89,30 @@ class CoreTests(unittest.TestCase):
                 p=root/rel;p.parent.mkdir();p.write_text('{}')
             with self.assertRaisesRegex(RuntimeError,'clean_json'):discover_inputs(str(root),{})
 
+    def test_server_folder_mapping_ignores_old_degraded_dataset(self):
+        with tmp() as d:
+            root=Path(d)
+            for rel in ['textvqa_clean/textvqa/TextVQA_0.5.1_train.json',
+                        'textocr_0_1_train_json/TextOCR_0.1_train.json',
+                        'textvqa_degraded_10k/textvqa_realistic_v2_10k/main/image_manifest.csv',
+                        'textvqa_degraded/textvqa_realistic_v2/main/image_manifest.csv']:
+                p=root/rel;p.parent.mkdir(parents=True,exist_ok=True);p.write_text('{}')
+            options=read_json(REPO/'configs/phase3_h200_normal.json')['data']
+            actual=discover_inputs(str(root),options)
+            self.assertIn('textvqa_degraded_10k',actual['main_image_manifest'])
+            self.assertIn('textvqa_clean',actual['clean_json'])
+            self.assertIn('textocr_0_1_train_json',actual['textocr_json'])
+
+    def test_missing_10k_folder_never_falls_back_to_old_dataset(self):
+        with tmp() as d:
+            root=Path(d)
+            for rel in ['textvqa_clean/TextVQA_0.5.1_train.json',
+                        'textocr_0_1_train_json/TextOCR_0.1_train.json',
+                        'textvqa_degraded/main/image_manifest.csv']:
+                p=root/rel;p.parent.mkdir(parents=True,exist_ok=True);p.write_text('{}')
+            with self.assertRaisesRegex(RuntimeError,'main_image_manifest'):
+                discover_inputs(str(root),read_json(REPO/'configs/phase3_h200_normal.json')['data'])
+
     def test_split_deterministic_and_source_byte_groups_do_not_leak(self):
         rows=[row(str(i),hashlib.sha256(str(i).encode()).hexdigest()) for i in range(20)]
         rows.append(row('duplicate_source_alias',rows[0]['clean_sha256']))
