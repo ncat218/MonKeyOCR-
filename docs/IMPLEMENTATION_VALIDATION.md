@@ -18,7 +18,7 @@ CPU checks cover:
 The runtime performs additional checks before expensive experiments:
 
 1. Dataset locations exist and are unambiguous before the CUDA stack is compiled.
-2. A real compute allocation exposes one CUDA device; toolkit selection is recorded.
+2. A real compute allocation exposes one CUDA device; toolkit selection is recorded. If no compatible CUDA 12.x compiler is found, the configured fallback installs NVIDIA CUDA Toolkit 12.8.1 in a separate workspace Conda prefix, then checks headers/libraries and compiles a tiny CUDA translation unit before the large stack setup. This does not install a driver or modify Conda base.
 3. MMCV NMS and deformable convolution forward/backward execute on the allocated device.
 4. Original checkpoint/config/backbone hashes match verified Phase 1 revisions.
 5. The real MMOCR training data pipeline, loss, backward pass and AdamW optimizer are probed on a minibatch before long inference. The in-memory probe model is discarded and the original checkpoint file is unchanged.

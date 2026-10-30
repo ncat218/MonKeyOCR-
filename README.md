@@ -59,6 +59,10 @@ Repo **không tải hoặc tạo lại ba dataset**. Người dùng đưa chúng
 
 ## Một job H200 normal cho toàn bộ suite
 
+Runner tìm toolkit qua `environment.cuda_home`, các biến `CUDA_HOME`/`CUDA_PATH`/`CONDA_PREFIX`, `PATH` và những vị trí CUDA/HPC thông dụng. Nếu không tìm được toolkit 12.x phù hợp, mặc định dùng Conda có sẵn để cài **`cuda-toolkit=12.8.1`** từ `nvidia/label/cuda-12.8.1` vào `<workspace>/environment_and_models__phase1_verified_stack/cuda_toolkit_12_8_1__private_nvidia_conda_environment`. Không cài vào Conda base, không thay driver và không cần sudo. Cache Conda cũng nằm trong datastore. Có thể tắt bằng `environment.auto_install_private_cuda128_if_missing=false`.
+
+Lần đầu bổ sung toolkit cần thêm thời gian tải, dung lượng datastore và truy cập kênh NVIDIA/conda-forge. Runner compile một file CUDA nhỏ để kiểm tra toolkit/host compiler trước khi tải stack lớn, rồi vẫn kiểm tra CUDA ops forward/backward. Dòng CUDA Version của `nvidia-smi` chỉ phản ánh driver; không dùng nó để chọn toolkit 13.x hay đổi Torch cu128 sang cu130.
+
 Lệnh khởi động cần Python ≥3.8; môi trường chạy model Python 3.11 được tạo tự động bên trong job.
 
 Mặc định của `configs/phase3_h200_normal.json`:
@@ -75,7 +79,7 @@ Mặc định của `configs/phase3_h200_normal.json`:
 
 Code tự tạo Python 3.11 venv, tải nguồn/model đã pin, build MMCV cho compute capability GPU đang được cấp, chạy CUDA forward/backward và kiểm tra checkpoint. Môi trường, HF cache, source, dataset snapshots và outputs nằm trong datastore workspace; không đặt khối dữ liệu lớn ở Home.
 
-Cần Internet ở compute node trong lần setup đầu hoặc một environment/cache đã chuẩn bị tương ứng; cần `git`, compiler C++, toolkit `nvcc` CUDA 12.x (ưu tiên 12.8), driver tương thích PyTorch cu128. Không thể suy ra `nvcc` từ dòng CUDA Version của `nvidia-smi`. Nếu module CUDA chưa được load, phải dùng module mà HPC cung cấp hoặc điền `environment.cuda_home`. Khác minor CUDA 12.x được ghi rõ là môi trường adapted và phải qua phép thử CUDA; không tự chuyển CUDA major hay cài driver.
+Cần Internet ở compute node trong lần setup đầu hoặc một environment/cache đã chuẩn bị tương ứng; cần `git`, compiler C++ và driver tương thích PyTorch cu128. Toolkit `nvcc` CUDA 12.x (ưu tiên 12.8) có thể lấy từ hệ thống/module đã load hoặc từ phương án cài riêng tự động bên trên. Nếu tắt fallback hoặc không có Conda, cung cấp toolkit qua module HPC hoặc `environment.cuda_home`. Không thể suy ra `nvcc` từ dòng CUDA Version của `nvidia-smi`. Khác minor CUDA 12.x được ghi rõ là môi trường adapted và phải qua phép thử CUDA; không tự dùng toolkit 13.x hay cài driver.
 
 Workspace mặc định là `/datastore/<username>/_workspace_monkeyocr_text_detection_phase3` nếu datastore cá nhân tồn tại; nếu không thì là `_workspace_monkeyocr_text_detection_phase3` cạnh repo. Có thể đặt `workspace_root` trước lượt đầu. Không đặt raw datasets trong workspace/cache do chương trình quản lý.
 

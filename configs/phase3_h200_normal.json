@@ -16,6 +16,7 @@
   "environment": {
     "cuda_home": "",
     "allow_recorded_cuda12_minor_mismatch": true,
+    "auto_install_private_cuda128_if_missing": true,
     "build_jobs": 4
   },
   "data": {
