@@ -1,0 +1,8 @@
+# Optional light dependencies for real MMEngine Config tests; no Torch/CUDA needed.
+# Install mmengine==0.10.7 separately with --no-deps to avoid unrelated image/plot dependencies.
+addict==2.4.0
+yapf==0.43.0
+rich==15.0.0
+PyYAML==6.0.3
+termcolor==3.3.0
+regex; sys_platform == 'win32'

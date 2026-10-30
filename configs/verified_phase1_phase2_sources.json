@@ -1,0 +1,23 @@
+{
+  "monkey_commit": "6cc0c0bb4864f2541fa6bc3a8f976cffaac8f359",
+  "mmcv_commit": "fc038a386a42d1f36d9ec49169d5817a52c70b8e",
+  "mmocr_commit": "1dcd6fa6958de22bcb997319833f0ac19c180ec7",
+  "detector_hf_revision": "58c8bd712a1757a1d21b729ab69910573ecc325b",
+  "backbone_hf_revision": "51778e7738fdad36ed72288881071b4dcd04b127",
+  "checkpoint_sha256": "4b13e26ad5c2e1b13fef45ac608298254d083062d2b9cafba706064bd8e2cf82",
+  "official_config_sha256": "db34e11dff43c8fc0d07bc5807a4e22442d218ccd43183d8b610e1d330be0e2c",
+  "phase2_manifest_sha256": "94e3a2ce989ce6a298d7ea30e7ce70f22ac676092b29df808bc3d33b426bf242",
+  "evaluation_protocol_sha256": "0530adc27e230e9dafa4e4019070ace1de3673f493ae4ea70b45a32e45f7af81",
+  "evaluator_sha256": "ea25c8d9fc240ec10dc6eb45883b163c8e92952ee885423985e6d013f026fcdc",
+  "phase2_sources": 9898,
+  "backbone_adapter_sha256": "46c2bd77c87db9da551d1379be2a89e5c014596d054ccc4d099bb89ab604abbd",
+  "backbone_files_sha256": {
+    ".gitattributes": "11ad7efa24975ee4b0c3c3a38ed18737f0658a5f75a0a96787b576a78a023361",
+    "README.md": "8ec55b1a8e1f23a5ab2b82fba5a0c9947fc225a637ece1ebc1525443c66c004c",
+    "config.json": "f58baf575c23f525c3ff1243267e799b9aaa951beeef9a5c87d6bd64bed337a8",
+    "configuration_monkeyocrv2_vitae.py": "251d471e9f8d400c6159aa998295bd27b4a2e514b4e3528da9abb44e8c44595d",
+    "model.safetensors": "8f4d2dc342c263ae2299a66dc39631f9424fa09c4f575b142ea40e1b1cc1bad4",
+    "modeling_monkeyocrv2_vitae_vision.py": "82d7614d14de76a0a6961e9678296ca8695901d378032ea3e6b5c2e22bbc2a31",
+    "preprocessor_config.json": "146fbdeca40a80ddcb3d3c959ba48e4daa2837ab8fc4d3d1f87bcd65d6039d72"
+  }
+}

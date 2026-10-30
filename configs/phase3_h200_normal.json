@@ -1,0 +1,52 @@
+{
+  "run_name": "phase3_dbnet_monkeyocrv2_as_textvqa_clean_and_realistic_mix_l2_seed42_v1",
+  "dataset_parent": "",
+  "workspace_root": "",
+  "seed": 42,
+  "scheduler": {
+    "auto_submit": true,
+    "account": "uit",
+    "partition": "normal",
+    "gres": "gpu:2g.35gb:1",
+    "cpus": 8,
+    "ram_gb": 40,
+    "walltime": "2-20:00:00"
+  },
+  "environment": {
+    "cuda_home": "",
+    "allow_recorded_cuda12_minor_mismatch": true,
+    "build_jobs": 4
+  },
+  "data": {
+    "clean_json": "",
+    "textocr_json": "",
+    "main_image_manifest": "",
+    "clean_images_root": "",
+    "degraded_root": "",
+    "require_verified_phase2_manifest": true
+  },
+  "split": {"train": 0.7, "validation": 0.15, "test": 0.15},
+  "tiling": {
+    "grid": [2, 2],
+    "overlap_fraction_of_tile": 0.2,
+    "include_global_view": true,
+    "interior_seam_margin_px": 2,
+    "polygon_nms_iou_candidates": [0.3, 0.5],
+    "development_sources_max": 200
+  },
+  "training": {
+    "optimizer_updates": 3000,
+    "micro_batch_size": 2,
+    "effective_batch_size": 4,
+    "learning_rate": 0.00002,
+    "weight_decay": 0.0001,
+    "warmup_optimizer_updates": 100,
+    "validation_every_optimizer_updates": 1000,
+    "checkpoint_every_optimizer_updates": 250,
+    "num_workers": 4,
+    "gradient_clip_max_norm": 5.0,
+    "selection_metric": "balanced_clean_degraded_hmean"
+  },
+  "evaluation": {"bootstrap_repetitions": 1000},
+  "scope": "E0 global, E0 global plus overlapping 2x2 tiles, E1 clean fine-tune, E2 balanced clean/degraded fine-tune; no E3"
+}
