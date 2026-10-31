@@ -31,7 +31,8 @@ def validate_config(cfg):
 
 
 def code_fingerprint(repo):
-    files=sorted((repo/'src').rglob('*.py'))+[repo/'run_all.py',repo/'constraints-gpu.txt',repo/'configs/verified_phase1_phase2_sources.json']
+    files=sorted((repo/'src').rglob('*.py'))+[repo/'run_all.py',repo/'constraints-gpu.txt',
+        repo/'configs/verified_phase1_phase2_sources.json',repo/'configs/verified_phase2_manifest_variants.json']
     return identity({str(p.relative_to(repo)):sha256(p) for p in files})
 
 

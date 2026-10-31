@@ -9,6 +9,7 @@ CPU checks cover:
 - Deterministic source-ID/source-byte grouped splits with no train/validation/test leakage.
 - E1/E2 source pools, mixed-condition training annotations, outside-ROI ignore masks with holes, and training-only conversion of fragmented polygons.
 - Exact frozen Phase 2 evaluator source hash; evaluation GT is not replaced by training approximations.
+- Exact original/reviewed manifest byte hashes and audit identity; an unreviewed hash, changed audit, changed IDs/image hashes, material geometry changes, reordered/missing rows and non-finite values are rejected. Full offline comparison of the supplied job 7845 manifest against Phase 2 found only bounded floating-point roundoff in 40 of 9,898 rows; see `MANIFEST_IDENTITY_REVIEW_JOB7845.md`.
 - Truncated-last-line prediction recovery and rejection of corrupt middle lines.
 - Completed-stage output hashes, changed-input rejection, failed-stage retry, and exclusive stage identity.
 - One command submitting one Slurm allocation; plan-only does not submit or bootstrap.
@@ -24,6 +25,6 @@ The runtime performs additional checks before expensive experiments:
 5. The real MMOCR training data pipeline, loss, backward pass and AdamW optimizer are probed on a minibatch before long inference. The in-memory probe model is discarded and the original checkpoint file is unchanged.
 6. Every inference input is checked against its frozen image hash; incomplete predictions are not scored.
 
-Exact inference bitwise equality across T4 and H200 is not assumed. The Phase 3 E0 baseline is re-evaluated on the same test sources and H200 environment used for the other methods. Dataset master identity and evaluator/protocol hashes remain pinned to the Phase 2 baseline.
+Exact inference bitwise equality across T4 and H200 is not assumed. The Phase 3 E0 baseline is re-evaluated on the same test sources and H200 environment used for the other methods. Dataset master identity is locked to the original Phase 2 bytes or an explicitly reviewed complete byte variant; evaluator/protocol hashes remain exactly pinned to the Phase 2 baseline. Geometry is never rounded or replaced at runtime.
 
 If a runtime check fails, the suite stops with a named log and resumable artifacts. It never emits a completed comparison in place of missing experiment results.

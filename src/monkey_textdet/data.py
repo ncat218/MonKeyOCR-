@@ -63,9 +63,11 @@ def build_shared(paths,output,locks,require_verified=True):
     cfg=dict(input_root=paths['degraded_root'],output_root=str(output),overlay_sources=12)
     cfg.update({k:paths[k] for k in ('clean_json','textocr_json','main_image_manifest','clean_images_root','degraded_root')})
     result=shared.build_shared_manifest(cfg)
-    if require_verified and result['manifest_sha256']!=locks['phase2_manifest_sha256']:
-        raise RuntimeError('Rebuilt master manifest differs from verified Phase 2. Inspect dataset versions/audit; '
-                           'do not silently benchmark another intersection or disable the lock to force completion.')
+    if require_verified:
+        from .manifest_identity import verify_phase2_manifest
+        receipt=verify_phase2_manifest(output,locks)
+        if result['manifest_sha256']!=receipt['actual_manifest_sha256']:
+            raise RuntimeError('Shared builder result differs from the verified manifest bytes')
     assert sha256(output/'evaluation_protocol.json')==locks['evaluation_protocol_sha256']
     assert sha256(Path(__file__).parent/'vendor/evaluate_shared.py')==locks['evaluator_sha256']
     return result

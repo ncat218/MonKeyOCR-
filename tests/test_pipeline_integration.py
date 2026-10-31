@@ -62,6 +62,8 @@ class PipelineIntegration(unittest.TestCase):
             locks=read_json(REPO/'configs/verified_phase1_phase2_sources.json')
             locks.update(checkpoint_sha256=sha256(ckpt),official_config_sha256=sha256(official))
             save_json(repo/'configs/verified_phase1_phase2_sources.json',locks)
+            save_json(repo/'configs/verified_phase2_manifest_variants.json',
+                      read_json(REPO/'configs/verified_phase2_manifest_variants.json'))
             cfg=read_json(REPO/'configs/phase3_h200_normal.json');cfg['data']['require_verified_phase2_manifest']=False
             cfg['evaluation']['bootstrap_repetitions']=10
             cfg_path=repo/'configs/suite.json';save_json(cfg_path,cfg)

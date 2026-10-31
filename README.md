@@ -88,7 +88,7 @@ Không có benchmark H200 Phase 3 để dự đoán thời gian hoặc bảo đ�
 ## Thí nghiệm chạy tự động
 
 1. Tìm đủ ba input, xác minh metadata/source hashes và dựng lại master manifest bằng code công khai Phase 2.
-2. Mặc định yêu cầu manifest/protocol đúng SHA256 của 9.898 cặp đã kiểm chứng. Dataset khác phiên bản hoặc ánh xạ sai sẽ dừng trước benchmark.
+2. Mặc định kiểm tra SHA256 thực tế của manifest 9.898 cặp: chấp nhận bản Phase 2 gốc hoặc bản số thực HPC đã được đối chiếu toàn bộ và đăng ký hash riêng. Audit dữ liệu, protocol và evaluator vẫn được khóa; manifest chưa được duyệt sẽ dừng. Không dùng phép so sánh gần đúng để tự chấp nhận manifest lạ. Xem [đối chiếu job 7845](docs/MANIFEST_IDENTITY_REVIEW_JOB7845.md).
 3. Freeze split theo source ID **và SHA256 ảnh nguồn**: 70% train, 15% validation, phần còn lại test, seed 42. Không để hai bản của cùng nguồn rơi vào hai split. Mọi condition dùng chung split.
 4. Xuất training targets và exact validation GT. Chạy probe loss/backward/optimizer trên một minibatch, không ghi đè checkpoint gốc.
 5. Chạy E0 global trên validation và test. Đây là baseline trên cùng H200/pipeline và cùng test của Phase 3.
@@ -155,6 +155,8 @@ Files trong thư mục metric giữ tên chuẩn `metrics.json`, `per_image.json
 Bảng cuối: `RESULTS__phase3_dbnet_monkeyocrv2_as__global_2x2_E1_E2.md` và `comparison__all_experiments__precision_recall_hmean_small_text_recall.csv`. JSON chứa metric đầy đủ, clean/degraded gap CI và CI cải thiện Hmean từng phương pháp so với E0. Tiled latency ghi rõ khi cộng thời gian global đã cache với thời gian các ô mới đo.
 
 ## Resume và gián đoạn
+
+**Khôi phục sau job 7845:** phiên bản này đổi run name mặc định từ `seed42_v1` sang `seed42_v2`, vì code kiểm tra manifest đã thay đổi. Sau khi job cũ kết thúc, `git pull --ff-only` rồi chạy lại lệnh cũ với cùng `--workspace` và `--dataset-parent`. Log/input của v1 được giữ nguyên; cache môi trường/model hợp lệ trong cùng workspace được tái sử dụng. Bản sửa không chỉnh GT hoặc tạo lại ảnh. File `phase2_manifest_identity_verification.json` ghi rõ bản manifest nào được chấp nhận. Khi gửi cho Paddle, dùng đúng manifest đã freeze của lượt v2.
 
 Trước khi submit, runner chỉ kiểm tra vị trí các file metadata trong ba thư mục đã chọn. Nếu thiếu metadata của `textvqa_degraded_10k`, nó dừng ngay tại login node và không gửi job GPU. Chưa load annotation JSON, hash toàn ảnh hay chạy model ở bước kiểm tra tên file này. Audit nội dung và toàn bộ tính toán vẫn ở trong allocation.
 
