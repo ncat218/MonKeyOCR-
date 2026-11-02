@@ -11,6 +11,11 @@ from .common import Processes,StageState,identity,jsonl,locked_json,read_json,sa
 
 
 def validate_config(cfg):
+    if cfg.get('suite') == 'full_r1_dbnet_vs_asf_and_validation_mask_sweep':
+        from .asf_suite import validate
+        return validate(cfg)
+    if cfg.get('suite'):
+        raise ValueError('Unknown experiment suite: '+str(cfg['suite']))
     from .training import training_schedule
     schedule=training_schedule(cfg['training'])
     if schedule['val_interval']<1 or schedule['val_interval']>schedule['max_iters']:
@@ -37,6 +42,9 @@ def code_fingerprint(repo):
 
 
 def run(a):
+    if read_json(a.config).get('suite') == 'full_r1_dbnet_vs_asf_and_validation_mask_sweep':
+        from .asf_suite import run as run_full
+        return run_full(a)
     from .data import discover_inputs,build_shared,freeze_splits,export_training_annotations
     from .inference import generate_inference_config,merge_file
     from .training import make_training_config

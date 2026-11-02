@@ -1,4 +1,24 @@
-# MonkeyOCRv2 Text Detection Phase 3
+# MonkeyOCRv2 Text Detection — FULL_R1 DBNet / ASF và Phase 3
+
+**Suite mới chốt ngày 03/11/2026:** huấn luyện lại DBNet và DBNet+ASF trên cùng giao TextVQA official train / full degraded MAIN / TextOCR word GT; chia detection70/15/15 theo source/clean SHA. Hai nhánh mixed clean/degraded có cùng10.000 optimizer updates. Đánh giá ngưỡng native0.30 và ngưỡng chọn trên validation; giữ MonkeyOCRv2-AS, global inference, loss/shrink/unclip.
+
+```bash
+git pull --ff-only origin main
+python run_all.py \
+  --config configs/phase4_full_textvqa_dbnet_vs_asf_h200_normal.json \
+  --dataset-parent /datastore/dungmt/textvqa/data/benchmark_v1/raw \
+  --workspace /datastore/dungmt/textvqa/Tuan/monkeyocr_workspace
+```
+
+Tự submit **một job normal/mig2-35**, tái dùng stack đã xác minh. Dataset nhận dạng: `full_textvqa_degraded`; không fallback sang10K cũ. Số28.408 MAIN images không đồng nghĩa28.408 ảnh có word GT; audit sẽ báo giao thực tế. Không đổi/xóa run7957.
+
+[Hướng dẫn cập nhật, chạy, xem logs và gửi kết quả FULL_R1](docs/FULL_R1_DBNet_vs_ASF__UPDATE_RUN_MONITOR_AND_READ_RESULTS.md).
+
+**Trạng thái suite ASF:** kiểm thử CPU/config/controller; chưa chạy training/inference ASF thật trên H200. Job sẽ kiểm tra tải weights, gradient và native P-map equivalence trước khi dùng kết quả. Không bảo đảm trước ASF cải thiện chữ nhỏ.
+
+## Suite Phase 3 cũ — giữ để tái lập
+
+Các lệnh mặc định và mô tả bên dưới dành cho10K cũ. Muốn chạy FULL_R1 phải truyền `--config` mới như trên.
 
 Một lệnh chạy trọn bộ thí nghiệm trên HPC UIT: checkpoint gốc, suy luận ảnh toàn cảnh kết hợp ô 2×2, fine-tune clean (E1), fine-tune clean + degraded (E2), rồi xuất bảng so sánh trên cùng nguồn ảnh test. Người phụ trách: Tuấn.
 
@@ -8,7 +28,7 @@ python run_all.py
 
 Nếu chạy lệnh ở login node có Slurm, chương trình **tự submit đúng một job `normal`** và in job ID cùng đường dẫn logs. Khi job được cấp GPU, toàn bộ các bước bên dưới chạy tự động trong allocation đó. Nếu đã ở trong Slurm GPU allocation, chương trình chạy trực tiếp. Không cần gọi riêng setup, audit, inference, train hay evaluation.
 
-**Trạng thái bàn giao:** đã kiểm thử CPU, geometry, split, resume và controller bằng GPU workers giả trong test tạm. Chưa chạy training/inference Phase 3 thật trên H200. Không có kết quả cải thiện được tạo sẵn hoặc bảo đảm trước.
+**Trạng thái Phase3:** Tuấn đã chạy job7957 trên HPC, `COMPLETED 0:0` trong2h17m02s với bộ10K cũ; E0/global, E0/2×2, E1 và E2 đã có kết quả. Điều này không phải xác nhận suite ASF mới đã chạy. Kiểm thử orchestration dùng worker giả chỉ kiểm tra luồng điều khiển, không tạo evidence model thật.
 
 ## Lấy code và khai báo dữ liệu
 

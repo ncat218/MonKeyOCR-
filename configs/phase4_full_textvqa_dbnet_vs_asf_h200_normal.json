@@ -1,0 +1,37 @@
+{
+  "suite": "full_r1_dbnet_vs_asf_and_validation_mask_sweep",
+  "run_name": "phase4_FULL_R1_official_train_GT_intersection_DBNet_vs_ASF_mixed_10000updates_mask_validation_seed42_v1",
+  "dataset_parent": "",
+  "workspace_root": "",
+  "seed": 42,
+  "scheduler": {
+    "auto_submit": true, "account": "uit", "partition": "normal", "qos": "mig2-35",
+    "gres": "gpu:2g.35gb:1", "cpus": 8, "ram_gb": 40, "walltime": "2-20:00:00"
+  },
+  "environment": {
+    "cuda_home": "", "allow_recorded_cuda12_minor_mismatch": true,
+    "auto_install_private_cuda128_if_missing": true, "build_jobs": 4
+  },
+  "data": {
+    "dataset_subdirectories": {
+      "clean_json": "textvqa_clean", "textocr_json": "textocr_0_1_train_json",
+      "main_image_manifest": "full_textvqa_degraded"
+    },
+    "excluded_dataset_directories": ["textvqa_degraded", "textvqa_degraded_10k"],
+    "clean_json": "", "textocr_json": "", "main_image_manifest": "",
+    "clean_images_root": "", "degraded_root": "", "require_verified_phase2_manifest": false
+  },
+  "split_scope": "official_TextVQA_train_intersection_only",
+  "split": {"train": 0.7, "validation": 0.15, "test": 0.15},
+  "tiling": {"development_sources_max": 200},
+  "training": {
+    "optimizer_updates": 10000, "micro_batch_size": 2, "effective_batch_size": 4,
+    "learning_rate": 0.00002, "weight_decay": 0.0001, "warmup_optimizer_updates": 100,
+    "validation_every_optimizer_updates": 2000, "checkpoint_every_optimizer_updates": 500,
+    "num_workers": 4, "gradient_clip_max_norm": 5.0,
+    "selection_metric": "balanced_clean_degraded_hmean"
+  },
+  "mask_thresholds_validation_only": [0.30, 0.20, 0.15, 0.10, 0.05],
+  "evaluation": {"bootstrap_repetitions": 1000},
+  "scope": "Two matched fresh mixed-data trainings, DBNet noASF versus official MMOCR ASF; native and validation-selected mask threshold on identical held-out detection test; no tiling, no dynamic T, no loss/shrink/unclip changes."
+}

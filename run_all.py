@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One command: auto-submit one Slurm job, bootstrap, then run all Phase 3 experiments."""
+"""One command: auto-submit one Slurm job, reuse the verified stack, run the configured suite."""
 from pathlib import Path
 import argparse
 import getpass
@@ -54,25 +54,32 @@ def main():
         from monkey_textdet.common import utc_stamp, save_json
         from monkey_textdet.data import discover_inputs
         discovered=discover_inputs(dataset_parent,config['data'],exclude=[workspace,REPO])
+        full_suite = config.get('suite') == 'full_r1_dbnet_vs_asf_and_validation_mask_sweep'
+        if full_suite:
+            from monkey_textdet.full_data import read_metadata
+            _, metadata_check = read_metadata(discovered)
+            print('Verified FULL_R1 metadata before submission:', metadata_check['main_counts_by_official_split'])
+        purpose = ('FULL_R1_DBNet_vs_ASF__mixed_training_validation_masks_test' if full_suite
+                   else 'all_phase3_experiments')
         log_dir = workspace / config['run_name'] / 'logs' / 'slurm_all_experiments'
         log_dir.mkdir(parents=True, exist_ok=True)
         stamp = utc_stamp()
         save_json(log_dir/(stamp+'__dataset_file_locations_verified_before_submit.json'),discovered)
-        script = log_dir / f'{stamp}__submit_all_phase3_experiments_normal.sh'
+        script = log_dir / f'{stamp}__submit_{purpose}_normal.sh'
         command = [sys.executable, '-u', str(Path(__file__).resolve()), '--in-allocation',
                    '--config', str(config_path), '--workspace', str(workspace)]
         if dataset_parent:
             command += ['--dataset-parent', dataset_parent]
         script.write_text('#!/bin/bash\nset -euo pipefail\ncd ' + shlex.quote(str(REPO)) +
                           '\nexec ' + shlex.join(command) + '\n', encoding='utf-8')
-        cmd = ['sbatch', '--parsable', '--job-name=monkey_phase3_all_E0_tiles_E1_E2',
+        cmd = ['sbatch', '--parsable', '--job-name='+('monkey_FULL_R1_DBNet_ASF' if full_suite else 'monkey_phase3_all_E0_tiles_E1_E2'),
                '--ntasks=1',
                '--account=' + scheduler['account'], '--partition=' + scheduler['partition'],
                '--gres=' + scheduler['gres'], '--cpus-per-task=' + str(scheduler['cpus']),
                '--mem=' + str(scheduler['ram_gb']) + 'G', '--time=' + scheduler['walltime'],
                '--signal=B:USR1@180',
-               '--output=' + str(log_dir / (stamp + '__all_phase3_experiments__job_%j.stdout.log')),
-               '--error=' + str(log_dir / (stamp + '__all_phase3_experiments__job_%j.stderr.log')), str(script)]
+               '--output=' + str(log_dir / (stamp + '__'+purpose+'__job_%j.stdout.log')),
+               '--error=' + str(log_dir / (stamp + '__'+purpose+'__job_%j.stderr.log')), str(script)]
         if scheduler.get('qos'):
             cmd.insert(-1,'--qos='+scheduler['qos'])
         job = subprocess.check_output(cmd, text=True).strip()

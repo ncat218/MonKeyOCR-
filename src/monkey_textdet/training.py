@@ -105,12 +105,16 @@ def run(a):
         loss.backward()
         gradients=[p.grad for p in model.parameters() if p.requires_grad and p.grad is not None]
         assert gradients and all(torch.isfinite(g).all() for g in gradients),'Non-finite/missing training gradients'
+        asf_gradients = {k:p.grad for k,p in model.named_parameters() if k.startswith(('neck.asf_conv.', 'neck.asf_attn.'))}
+        if asf_gradients and any(g is None or not torch.isfinite(g).all() for g in asf_gradients.values()):
+            raise RuntimeError('Missing/non-finite gradient in newly added ASF parameters')
         optimizer=torch.optim.AdamW(model.parameters(),lr=cfg.optim_wrapper.optimizer.lr,
                                     weight_decay=cfg.optim_wrapper.optimizer.weight_decay)
         optimizer.step()
         assert all(torch.isfinite(p).all() for p in model.parameters()),'Non-finite parameters after optimizer probe'
         save_json(a.result,dict(probe_only=True,training_forward_backward_optimizer='passed',loss=float(loss.detach()),
             parameters_with_gradients=len(gradients),peak_allocated_gpu_mib=torch.cuda.max_memory_allocated()/1024**2,
+            ASF_parameter_tensors_with_finite_gradients=len(asf_gradients),
             sample_ids=[s.get('sample_id') for s in processed['data_samples']],
             no_checkpoint_weights_modified=True))
         return
@@ -128,7 +132,7 @@ def run(a):
     if len(candidates)!=1:raise RuntimeError(f'Expected one best validation checkpoint; found {candidates}')
     best=candidates[0]
     completed=dict(experiment=a.experiment,best_checkpoint=str(best),best_checkpoint_sha256=sha256(best),
-        initial_checkpoint_sha256=sha256(a.initial_checkpoint),initialization='same original detector for E1 and E2',
+        initial_checkpoint_sha256=sha256(a.initial_checkpoint),initialization='strictly loaded supplied initial detector; full-data suite records shared-original and new-ASF key checks separately',
         checkpoint_selection='maximum validation mean(clean Hmean,degraded Hmean); fixed native postprocessing',
         iterations_completed=runner.iter,optimizer_updates=runner.iter//cfg.optim_wrapper.accumulative_counts,
         peak_allocated_gpu_mib=torch.cuda.max_memory_allocated()/1024**2,
