@@ -62,6 +62,38 @@ This packet does not measure attention maps, feature norms or actual parameter
 updates, and does not evaluate the initial untrained ASF detector. Those would
 require a separate explicitly identified model diagnostic after reviewing logs.
 
+## After reading logs: compare saved tensors on CPU
+
+Job9276 logs contain five validation points per model. B improves through 8,000
+updates and falls slightly at 10,000; B is below A at every measured point.
+This does not establish convergence or that ASF tensors themselves updated.
+Scalar validation `step` values are zero; recover the five microiteration points
+from preceding training records and text logs, then divide by accumulation2.
+
+Use the existing private Python to inspect saved weights without model execution:
+
+```bash
+cd /datastore/dungmt/textvqa/Tuan/MonKeyOCR-
+git pull --ff-only origin main
+/datastore/dungmt/textvqa/Tuan/monkeyocr_workspace/environment_and_models__phase1_verified_stack/python311_venv/bin/python \
+  scripts/audit_full_r1_checkpoint_updates_cpu.py \
+  --workspace /datastore/dungmt/textvqa/Tuan/monkeyocr_workspace
+```
+
+Send the small ZIP printed at `ZIP_TO_SEND`. This CPU script uses installed torch
+and numpy; it does not construct a model, call CUDA, train, submit a job, modify
+weights or install packages. It verifies checkpoint hashes against recorded run
+metadata before loading these trusted local checkpoints. It compares each branch
+against its own initialization, separates initial dtype rounding from subsequent
+displacement and splits known BatchNorm buffers. Other buffers can still appear
+in floating state, so counts are not automatically trainable-parameter counts.
+The archive also recovers the four missing MMOCR source snapshots from the root
+derived from the actual A config, rather than an assumed nested directory.
+
+CPU array statistics, scope/hash guards and config-literal parsing are covered by
+local tests. Actual Torch checkpoint inspection must run in the HPC environment;
+no claim of an observed BF16 update failure is made before that result arrives.
+
 ## Hypotheses that must not be reported as measured results
 
 - Kaiming fan-out initialization on the four-output attention projection can give

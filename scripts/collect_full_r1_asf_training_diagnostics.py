@@ -165,7 +165,7 @@ def collect(workspace, run_name=RUN_NAME, job_id='9276', output=None):
                  'src/monkey_textdet/mmocr_plugins.py'):
         add(REPO / name, 'repository_at_collection/' + name, 'current_repository_snapshot', root=REPO)
     upstream = workspace / ('environment_and_models__phase1_verified_stack/'
-                            'upstream_MonkeyOCRv2/detection/mmocr')
+                            'upstream_MonkeyOCRv2/detection/mmocr/mmocr')
     for name in ('mmocr/models/textdet/necks/fpn_cat.py',
                  'mmocr/models/textdet/heads/db_head.py',
                  'mmocr/models/textdet/postprocessors/db_postprocessor.py',
