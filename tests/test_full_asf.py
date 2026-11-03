@@ -106,15 +106,16 @@ test_dataloader=dict(dataset=dict(pipeline=[dict(type='PackTextDetInputs',meta_k
                 def arg(name): return Path(command[command.index('--'+name)+1])
                 if 'monkey_textdet.variants' in command:
                     output = arg('output'); output.parent.mkdir(parents=True, exist_ok=True)
-                    output.write_bytes(b'fixture initialized weights')
+                    if '--verify-only' not in command:
+                        output.write_bytes(b'fixture initialized weights')
                     inits.append(str(arg('original')))
                     save_json(arg('receipt'), dict(fixture_only=True))
                 elif 'monkey_textdet.training' in command:
                     if '--probe-only' in command:
                         save_json(arg('result'), dict(fixture_only=True)); return
                     work = arg('work-dir'); work.mkdir(parents=True, exist_ok=True)
-                    best = work/'best_fake_validation_checkpoint.pth'; best.write_bytes(b'fixture trained')
-                    save_json(arg('result'), dict(best_checkpoint=str(best), fixture_only=True))
+                    best = work/'FINAL_WEIGHTS_ONLY__fake_completed_training.pth'; best.write_bytes(b'fixture trained')
+                    save_json(arg('result'), dict(evaluation_checkpoint=str(best), fixture_only=True))
                 elif 'monkey_textdet.mask_sweep' in command:
                     manifest, out = arg('manifest'), arg('output'); out.mkdir(parents=True, exist_ok=True)
                     folds.append(manifest.name)
@@ -146,6 +147,9 @@ test_dataloader=dict(dataset=dict(pipeline=[dict(type='PackTextDetInputs',meta_k
             status = read_json(marker)
             self.assertEqual(len(status['experiments']), 4)
             self.assertTrue(Path(status['final']['report']).is_file())
+            annotations = a.workspace/cfg['run_name']/'inputs/04_shared_mixed_training_and_exact_validation_annotations'
+            self.assertFalse(list(annotations.glob('*E1_clean_only*')))
+            self.assertEqual(original.read_bytes(), b'fixture original detector')
 
     def test_full_QA_duplicates_are_valid_and_only_official_train_enters_detection(self):
         with tmp() as d:

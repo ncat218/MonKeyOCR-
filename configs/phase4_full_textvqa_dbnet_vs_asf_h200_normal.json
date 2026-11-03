@@ -1,6 +1,6 @@
 {
   "suite": "full_r1_dbnet_vs_asf_and_validation_mask_sweep",
-  "run_name": "phase4_FULL_R1_official_train_GT_intersection_DBNet_vs_ASF_mixed_10000updates_mask_validation_seed42_v1",
+  "run_name": "phase4_FULL_R1_official_train_GT_intersection_DBNet_vs_ASF_mixed_10000updates_final_weights_only_seed42_v2",
   "dataset_parent": "",
   "workspace_root": "",
   "seed": 42,
@@ -27,11 +27,11 @@
   "training": {
     "optimizer_updates": 10000, "micro_batch_size": 2, "effective_batch_size": 4,
     "learning_rate": 0.00002, "weight_decay": 0.0001, "warmup_optimizer_updates": 100,
-    "validation_every_optimizer_updates": 2000, "checkpoint_every_optimizer_updates": 500,
+    "validation_every_optimizer_updates": 2000,
     "num_workers": 4, "gradient_clip_max_norm": 5.0,
-    "selection_metric": "balanced_clean_degraded_hmean"
+    "checkpoint_policy": "final_weights_only", "selection_metric": "final_optimizer_update"
   },
   "mask_thresholds_validation_only": [0.30, 0.20, 0.15, 0.10, 0.05],
   "evaluation": {"bootstrap_repetitions": 1000},
-  "scope": "Two matched fresh mixed-data trainings, DBNet noASF versus official MMOCR ASF; native and validation-selected mask threshold on identical held-out detection test; no tiling, no dynamic T, no loss/shrink/unclip changes."
+  "scope": "Two matched fresh mixed-data trainings with fixed final weights only and no periodic/optimizer/interruption checkpoints, DBNet noASF versus official MMOCR ASF; native and validation-selected mask threshold on identical held-out detection test; no tiling, no dynamic T, no loss/shrink/unclip changes."
 }

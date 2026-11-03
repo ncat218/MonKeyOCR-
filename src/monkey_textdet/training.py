@@ -18,8 +18,23 @@ def training_schedule(training):
         raise ValueError('Warmup must be shorter than the total optimizer-update budget')
     return dict(accumulation=accumulation,max_iters=updates*accumulation,
                 val_interval=training['validation_every_optimizer_updates']*accumulation,
-                checkpoint_interval=training['checkpoint_every_optimizer_updates']*accumulation,
+                checkpoint_interval=training.get('checkpoint_every_optimizer_updates', updates)*accumulation,
                 warmup_iters=training['warmup_optimizer_updates']*accumulation)
+
+
+def checkpoint_settings(training, schedule):
+    policy = training.get('checkpoint_policy', 'periodic_and_best')
+    if policy == 'final_weights_only':
+        if training['selection_metric'] != 'final_optimizer_update':
+            raise ValueError('Final-only weights require final_optimizer_update selection')
+        return dict(type='CheckpointHook', by_epoch=False, interval=-1, max_keep_ckpts=1,
+                    save_last=True, save_optimizer=False, save_param_scheduler=False, save_best=None,
+                    filename_tmpl='FINAL_WEIGHTS_ONLY__micro_iteration_{}.pth')
+    if policy != 'periodic_and_best':
+        raise ValueError('Unknown checkpoint policy: '+str(policy))
+    return dict(type='CheckpointHook', by_epoch=False, interval=schedule['checkpoint_interval'],
+                max_keep_ckpts=2, save_last=True, save_optimizer=True, save_param_scheduler=True,
+                save_best='shared/balanced_clean_degraded_hmean', rule='greater')
 
 
 def make_training_config(official,backbone,original_checkpoint,annotations,protocol,work_dir,config,condition,output):
@@ -62,10 +77,9 @@ def make_training_config(official,backbone,original_checkpoint,annotations,proto
                                     begin=warmup,end=schedule['max_iters'],by_epoch=False))
     cfg.default_hooks=dict(timer=dict(type='IterTimerHook'),logger=dict(type='LoggerHook',interval=25),
         param_scheduler=dict(type='ParamSchedulerHook'),sampler_seed=dict(type='DistSamplerSeedHook'),
-        checkpoint=dict(type='CheckpointHook',by_epoch=False,interval=schedule['checkpoint_interval'],
-                        max_keep_ckpts=2,save_last=True,save_optimizer=True,save_param_scheduler=True,
-                        save_best='shared/balanced_clean_degraded_hmean',rule='greater'))
-    cfg.custom_hooks=[dict(type='FiniteLossAndInterruptCheckpointHook',accumulation=schedule['accumulation'])]
+        checkpoint=checkpoint_settings(t, schedule))
+    cfg.custom_hooks=[dict(type='FiniteLossAndInterruptCheckpointHook',accumulation=schedule['accumulation'],
+        save_interrupt_checkpoint=t.get('checkpoint_policy') != 'final_weights_only')]
     cfg.visualizer=dict(type='TextDetLocalVisualizer',vis_backends=[dict(type='LocalVisBackend')],name='visualizer')
     cfg.log_processor=dict(type='LogProcessor',by_epoch=False,window_size=25)
     cfg.work_dir=str(work_dir);cfg.load_from=str(original_checkpoint);cfg.resume=False
@@ -119,7 +133,8 @@ def run(a):
             no_checkpoint_weights_modified=True))
         return
     last=a.work_dir/'last_checkpoint'
-    if last.is_file():
+    final_only = cfg.default_hooks.checkpoint.get('save_best') is None and not cfg.default_hooks.checkpoint.save_optimizer
+    if last.is_file() and not final_only:
         checkpoint=Path(last.read_text().strip())
         if not checkpoint.is_file():raise RuntimeError('last_checkpoint points to a missing training checkpoint')
         cfg.resume=True;cfg.load_from=str(checkpoint)
@@ -128,15 +143,23 @@ def run(a):
     runner.model.init_weights()
     load_checkpoint(runner.model,str(a.initial_checkpoint),map_location='cpu',strict=True)
     runner.train()
-    candidates=sorted(a.work_dir.glob('best_*.pth'))
-    if len(candidates)!=1:raise RuntimeError(f'Expected one best validation checkpoint; found {candidates}')
+    candidates = ([a.work_dir/cfg.default_hooks.checkpoint.filename_tmpl.format(runner.iter)]
+                  if final_only else sorted(a.work_dir.glob('best_*.pth')))
+    if len(candidates)!=1 or not candidates[0].is_file():
+        raise RuntimeError(f'Expected one completed evaluation checkpoint; found {candidates}')
     best=candidates[0]
-    completed=dict(experiment=a.experiment,best_checkpoint=str(best),best_checkpoint_sha256=sha256(best),
+    completed=dict(experiment=a.experiment,evaluation_checkpoint=str(best),evaluation_checkpoint_sha256=sha256(best),
         initial_checkpoint_sha256=sha256(a.initial_checkpoint),initialization='strictly loaded supplied initial detector; full-data suite records shared-original and new-ASF key checks separately',
-        checkpoint_selection='maximum validation mean(clean Hmean,degraded Hmean); fixed native postprocessing',
+        checkpoint_selection=('fixed final optimizer update; no best-validation weight selection' if final_only else
+                              'maximum validation mean(clean Hmean,degraded Hmean); fixed native postprocessing'),
+        checkpoint_policy='final_weights_only' if final_only else 'periodic_and_best',
         iterations_completed=runner.iter,optimizer_updates=runner.iter//cfg.optim_wrapper.accumulative_counts,
         peak_allocated_gpu_mib=torch.cuda.max_memory_allocated()/1024**2,
-        resumed_from=str(checkpoint) if last.is_file() and cfg.resume else None)
+        resumed_from=str(checkpoint) if cfg.resume else None)
+    if final_only:
+        completed['final_checkpoint'] = str(best)
+    else:
+        completed.update(best_checkpoint=str(best), best_checkpoint_sha256=sha256(best))
     save_json(a.result,completed)
     print(completed,flush=True)
 

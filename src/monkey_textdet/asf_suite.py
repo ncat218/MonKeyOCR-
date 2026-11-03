@@ -21,8 +21,10 @@ def validate(config):
         raise ValueError('Explicitly agree the detection split scope before running')
     if config['split'] != {'train': .7, 'validation': .15, 'test': .15}:
         raise ValueError('Agreed FULL_R1 detection split is 70/15/15 by source/clean SHA')
-    if config['training']['selection_metric'] != 'balanced_clean_degraded_hmean':
-        raise ValueError('Checkpoint selection must use validation clean/degraded mean Hmean')
+    from .training import checkpoint_settings
+    checkpoint_settings(config['training'], schedule)
+    if config['training']['checkpoint_policy'] != 'final_weights_only':
+        raise ValueError('This revised FULL_R1 suite saves final weights only')
     if not 0 < schedule['val_interval'] <= schedule['max_iters'] or schedule['max_iters'] % schedule['val_interval']:
         raise ValueError('Invalid validation interval')
     thresholds = config['mask_thresholds_validation_only']
@@ -107,7 +109,8 @@ def run(a):
     annotation_dir = inputs/'04_shared_mixed_training_and_exact_validation_annotations'
 
     def annotation_action():
-        result = export_training_annotations(splits, locations, annotation_dir)
+        result = export_training_annotations(splits, locations, annotation_dir,
+                                             train_conditions=('E2_clean_and_degraded_balanced',))
         return result, [Path(p) for p in result.values()]
 
     annotations = state.execute('03_export_same_mixed_targets_for_DBNet_and_ASF',
@@ -161,14 +164,16 @@ def run(a):
 
     for variant in VARIANTS:
         train_dir = outputs/'training'/variant
-        initial = inputs/'06_initialized_checkpoints'/('initial_detector__'+variant+'__from_same_original.pth')
-        receipt = initial.with_suffix('.initialization_receipt.json')
+        initial = (original if variant == VARIANTS[0] else
+                   inputs/'06_initialized_checkpoints'/('initial_detector__'+variant+'__from_same_original.pth'))
+        receipt = configs/('INITIALIZATION_RECEIPT__'+variant+'__shared_original_weights.json')
         train_config = configs/('training__'+variant+'__same_mixed_entries_and_optimizer_budget.py')
         model_config = configs/('inference__'+variant+'__native_global_resolution.py')
         make_training_config(official, backbone, initial, annotations, shared_dir/'evaluation_protocol.json',
                              train_dir, config, 'E2_clean_and_degraded_balanced', train_config)
         cfg = Config.fromfile(str(train_config), import_custom_modules=False)
         apply_variant(cfg, variant)
+        cfg.default_hooks.checkpoint.filename_tmpl = 'FINAL_WEIGHTS_ONLY__'+variant+'__micro_iteration_{}.pth'
         cfg.dump(str(train_config))
         generate_inference_config(official, backbone, model_config)
         infer_cfg = Config.fromfile(str(model_config), import_custom_modules=False)
@@ -176,9 +181,12 @@ def run(a):
         infer_cfg.dump(str(model_config))
 
         def initialize_action():
-            process.run([sys.executable, '-m', 'monkey_textdet.variants', '--config', train_config,
+            command = [sys.executable, '-m', 'monkey_textdet.variants', '--config', train_config,
                 '--original', original, '--output', initial, '--receipt', receipt, '--variant', variant,
-                '--seed', str(config['seed'])], variant+'__initialize_only_new_ASF_keys_and_verify_shared_weights', cwd=a.mmocr_root)
+                '--seed', str(config['seed'])]
+            if variant == VARIANTS[0]:
+                command.append('--verify-only')
+            process.run(command, variant+'__initialize_only_new_ASF_keys_and_verify_shared_weights', cwd=a.mmocr_root)
             return read_json(receipt), [initial, receipt]
 
         state.execute('04_initialize_'+variant, dict(config=sha256(train_config), original=sha256(original),
@@ -193,20 +201,20 @@ def run(a):
             return read_json(probe), [probe]
 
         state.execute('05_compatibility_'+variant, dict(config=sha256(train_config), initial=sha256(initial)), probe_action)
-        result_path = train_dir/('TRAINING_COMPLETE__'+variant+'__best_balanced_validation_checkpoint.json')
+        result_path = train_dir/('TRAINING_COMPLETE__'+variant+'__final_weights_only.json')
 
         def train_action():
             process.run([sys.executable, '-m', 'monkey_textdet.training', '--config', train_config,
                 '--initial-checkpoint', initial, '--work-dir', train_dir, '--result', result_path,
                 '--experiment', variant], variant+'__mixed_finetune_same_budget', cwd=a.mmocr_root)
             result = read_json(result_path)
-            best = Path(result['best_checkpoint'])
+            best = Path(result['evaluation_checkpoint'])
             return result, [result_path, best]
 
         trained = state.execute('06_train_'+variant, dict(config=sha256(train_config), initial=sha256(initial),
                                 source=fingerprint), train_action)
         training_results[variant] = dict(**trained, initialization_receipt=str(receipt))
-        checkpoint = Path(trained['best_checkpoint'])
+        checkpoint = Path(trained['evaluation_checkpoint'])
         validation = Path(sweep('07_validation_masks_'+variant, 'validation', checkpoint,
                                model_config, variant, config['mask_thresholds_validation_only']))
         candidates = []

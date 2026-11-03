@@ -112,7 +112,7 @@ def make_report(experiments, output, config, manifest, training, selections):
         '- Gap shrinkage caused by clean deterioration is not sufficient evidence of robustness. Failed threshold sweeps do not prove feature collapse.',
         '- Synthetic FULL_R1 data. Simulated review labels are not human readability/answerability judgments. TextOCR train overlaps Monkey pretraining sources.',
         '- Detection train/validation/test are 70/15/15 source/clean-SHA groups inside official TextVQA train. Official TextVQA val/test and generator calibration/ablation are excluded.',
-        '- Both models finish the same optimizer-update budget and use the best mean clean/degraded validation Hmean checkpoint. Coverage of all training entries during the full schedule does not imply that an earlier selected checkpoint has seen all entries.',
+        '- Both models use weights at the same fixed final optimizer update. Validation tracks training and selects postprocessing masks, not model weights. No periodic/best/optimizer/interruption checkpoints are saved in this run.',
         '- One training seed; source-bootstrap intervals do not measure variability across training seeds. Old10k job7957 is historical context, not the control for this full-data experiment.',
         '- Inference timing shares one P-map forward across thresholds; see per-image timing notes and peak allocated VRAM summaries. No promise of a fixed ASF overhead.', '']
     md = output/'RESULTS__FULL_R1_DBNet_ASF__small_words_corruptions_and_postprocessing.md'

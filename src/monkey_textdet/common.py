@@ -168,11 +168,13 @@ class StageState:
         started = utc_stamp()
         base = dict(stage=name, input_fingerprint=fingerprint, started_utc=started, status='running')
         save_json(marker, base)
+        print('STAGE START:', name, flush=True)
         try:
             result, artifacts = action()
             base.update(status='completed', finished_utc=utc_stamp(), result=result,
                         artifacts={str(Path(p).resolve()): sha256(p) for p in artifacts})
             save_json(marker, base)
+            print('STAGE COMPLETE:', name, flush=True)
             return result
         except BaseException as exc:
             base.update(status='interrupted_or_failed', error=f'{type(exc).__name__}: {exc}')

@@ -161,8 +161,11 @@ def instances_for(row,condition,audit):
     return result
 
 
-def export_training_annotations(splits,locations,output):
+def export_training_annotations(splits,locations,output,train_conditions=None):
     """Training targets may be adapted to MMOCR; evaluation GT remains the frozen exact geometry."""
+    requested = set(train_conditions if train_conditions is not None else ('E1_clean_only','E2_clean_and_degraded_balanced'))
+    if not requested or not requested <= {'E1_clean_only','E2_clean_and_degraded_balanced'}:
+        raise ValueError('Unsupported training annotation selection')
     output.mkdir(parents=True,exist_ok=True)
     audit=collections.Counter();result={}
     for fold in ('train','validation'):
@@ -181,6 +184,8 @@ def export_training_annotations(splits,locations,output):
                 exact[key]=dict(gt=row['gt_'+cond],roi=row['roi_'+cond],condition=cond,source=row['source_image_id'])
         choices={'E1_clean_only':condition_lists['clean'],'E2_clean_and_degraded_balanced':condition_lists['clean']+condition_lists['degraded']} if fold=='train' else {'validation_clean_and_degraded':condition_lists['clean']+condition_lists['degraded']}
         for label,records in choices.items():
+            if fold == 'train' and label not in requested:
+                continue
             path=output/f'annotations__{fold}__{label}__mmocr_polygon_targets.json'
             save_json(path,dict(metainfo=dict(dataset_type='TextDetDataset',task_name='textdet',category=[dict(id=0,name='text')]),data_list=records))
             result[label]=str(path)

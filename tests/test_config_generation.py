@@ -49,6 +49,19 @@ test_dataloader=dict(dataset=dict(pipeline=[dict(type='PackTextDetInputs',meta_k
             native=Config.fromfile(str(infer))
             self.assertNotIn('sample_id',native.test_dataloader.dataset.pipeline[0]['meta_keys'])
             self.assertEqual(native.model,e1.model)
+            full=read_json(REPO/'configs/phase4_full_textvqa_dbnet_vs_asf_h200_normal.json')
+            final_path=root/'final_only_training.py'
+            make_training_config(source,root/'backbone',root/'original.pth',annotations,root/'protocol.json',
+                root/'final_only',full,'E2_clean_and_degraded_balanced',final_path)
+            final=Config.fromfile(str(final_path),import_custom_modules=False)
+            hook=final.default_hooks.checkpoint
+            self.assertEqual(hook.interval,-1)
+            self.assertTrue(hook.save_last)
+            self.assertIsNone(hook.save_best)
+            self.assertFalse(hook.save_optimizer)
+            self.assertFalse(hook.save_param_scheduler)
+            self.assertFalse(final.custom_hooks[0].save_interrupt_checkpoint)
+            self.assertTrue(e1.custom_hooks[0].save_interrupt_checkpoint)
 
 
 if __name__=='__main__':unittest.main()

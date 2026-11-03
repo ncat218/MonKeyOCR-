@@ -47,8 +47,9 @@ class SharedPairedHmeanMetric(BaseMetric):
 class FiniteLossAndInterruptCheckpointHook(Hook):
     priority='LOWEST'
 
-    def __init__(self,accumulation):
+    def __init__(self,accumulation,save_interrupt_checkpoint=True):
         self.accumulation=accumulation;self.stop=False
+        self.save_interrupt_checkpoint=save_interrupt_checkpoint
 
     def before_train(self,runner):
         def request(signum,frame):self.stop=True
@@ -59,6 +60,9 @@ class FiniteLossAndInterruptCheckpointHook(Hook):
             if isinstance(value,(int,float)) and not math.isfinite(value):raise RuntimeError('Non-finite training loss/log value')
         # Do not checkpoint midway through gradient accumulation: partial gradients are not serialized.
         if self.stop and (runner.iter+1)%self.accumulation==0:
+            if not self.save_interrupt_checkpoint:
+                runner.logger.info('Stopped without an intermediate checkpoint; unfinished training restarts from initialization.')
+                raise SystemExit(75)
             filename=f'checkpoint__interrupted_after_micro_iteration_{runner.iter+1}.pth'
             runner.save_checkpoint(runner.work_dir,filename,by_epoch=False,
                                    save_optimizer=True,save_param_scheduler=True)

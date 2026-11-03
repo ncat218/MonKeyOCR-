@@ -1,6 +1,6 @@
 # MonkeyOCRv2 Text Detection — FULL_R1 DBNet / ASF và Phase 3
 
-**Suite mới chốt ngày 03/11/2026:** huấn luyện lại DBNet và DBNet+ASF trên cùng giao TextVQA official train / full degraded MAIN / TextOCR word GT; chia detection70/15/15 theo source/clean SHA. Hai nhánh mixed clean/degraded có cùng10.000 optimizer updates. Đánh giá ngưỡng native0.30 và ngưỡng chọn trên validation; giữ MonkeyOCRv2-AS, global inference, loss/shrink/unclip.
+**Suite mới chốt ngày 03/11/2026:** huấn luyện lại DBNet và DBNet+ASF trên cùng giao TextVQA official train / full degraded MAIN / TextOCR word GT; chia detection70/15/15 theo source/clean SHA. Hai nhánh mixed clean/degraded có cùng10.000 optimizer updates và chỉ lưu weights cuối; không checkpoint định kỳ/optimizer state. Run v2 mới tách khỏi v1/job9146 lỗi quota. Đánh giá ngưỡng native0.30 và ngưỡng chọn trên validation; giữ MonkeyOCRv2-AS, global inference, loss/shrink/unclip.
 
 ```bash
 git pull --ff-only origin main

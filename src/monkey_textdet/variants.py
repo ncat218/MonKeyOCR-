@@ -55,12 +55,19 @@ def initialize(a):
     for key, value in source.items():
         if not torch.equal(loaded[key].cpu(), value.cpu().to(loaded[key].dtype)):
             raise ValueError('Shared weights changed during initialization: '+key)
-    a.output.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(dict(state_dict=loaded, meta=dict(variant=a.variant,
-        original_checkpoint_sha256=sha256(a.original), initialization_seed=a.seed,
-        only_new_keys=added)), a.output)
+    if a.verify_only:
+        if a.variant != VARIANTS[0] or a.output.resolve() != a.original.resolve():
+            raise ValueError('Verify-only mode reuses only the original noASF detector')
+    else:
+        if a.output.resolve() == a.original.resolve():
+            raise ValueError('Never overwrite the original checkpoint')
+        a.output.parent.mkdir(parents=True, exist_ok=True)
+        torch.save(dict(state_dict=loaded, meta=dict(variant=a.variant,
+            original_checkpoint_sha256=sha256(a.original), initialization_seed=a.seed,
+            only_new_keys=added)), a.output)
     save_json(a.receipt, dict(variant=a.variant, original_checkpoint_sha256=sha256(a.original),
         initialized_checkpoint_sha256=sha256(a.output), shared_keys_verified=len(source),
+        reused_original_without_duplicate_checkpoint=a.verify_only,
         newly_initialized_keys=added, initialization_seed=a.seed,
         total_parameters=sum(p.numel() for p in model.parameters()),
         new_ASF_parameters=sum(p.numel() for k,p in model.named_parameters() if k in added),
@@ -74,4 +81,5 @@ if __name__ == '__main__':
         p.add_argument('--'+name, type=Path, required=True)
     p.add_argument('--variant', choices=VARIANTS, required=True)
     p.add_argument('--seed', type=int, required=True)
+    p.add_argument('--verify-only', action='store_true')
     initialize(p.parse_args())

@@ -99,7 +99,8 @@ def build_full_shared(paths, output):
     for name, path in metadata_paths(paths).items():
         shutil.copyfile(path, output/('GENERATOR_INPUT__'+name+path.suffix))
     source_qa = Path(provenance['source_qa'])
-    shutil.copyfile(source_qa, output/'GENERATOR_INPUT__source_QA_manifest__frozen_hash_verified.csv')
+    if sha256(source_qa) != sha256(metadata_paths(paths)['qa']):
+        shutil.copyfile(source_qa, output/'GENERATOR_INPUT__source_QA_manifest__frozen_hash_verified.csv')
     # Full audit does not substitute simulated answerability labels for TextOCR GT.
     save_json(output/'full_generator_metadata__verified_source_splits_and_QA_identity.json', provenance)
     textvqa = read_json(paths['clean_json'])
