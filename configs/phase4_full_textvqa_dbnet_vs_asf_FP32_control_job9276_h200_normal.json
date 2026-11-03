@@ -1,0 +1,90 @@
+{
+  "suite": "full_r1_dbnet_vs_asf_and_validation_mask_sweep",
+  "run_name": "phase4_FULL_R1_FP32_DBNet_vs_ASF_same_job9276_initialization_10000updates_final_only_seed42_v1",
+  "dataset_parent": "",
+  "workspace_root": "",
+  "seed": 42,
+  "scheduler": {
+    "auto_submit": true,
+    "account": "uit",
+    "partition": "normal",
+    "qos": "mig2-35",
+    "gres": "gpu:2g.35gb:1",
+    "cpus": 8,
+    "ram_gb": 40,
+    "walltime": "2-20:00:00"
+  },
+  "environment": {
+    "cuda_home": "",
+    "allow_recorded_cuda12_minor_mismatch": true,
+    "auto_install_private_cuda128_if_missing": true,
+    "build_jobs": 4
+  },
+  "data": {
+    "dataset_subdirectories": {
+      "clean_json": "textvqa_clean",
+      "textocr_json": "textocr_0_1_train_json",
+      "main_image_manifest": "full_textvqa_degraded"
+    },
+    "excluded_dataset_directories": [
+      "textvqa_degraded",
+      "textvqa_degraded_10k"
+    ],
+    "clean_json": "",
+    "textocr_json": "",
+    "main_image_manifest": "",
+    "clean_images_root": "",
+    "degraded_root": "",
+    "require_verified_phase2_manifest": false
+  },
+  "split_scope": "official_TextVQA_train_intersection_only",
+  "split": {
+    "train": 0.7,
+    "validation": 0.15,
+    "test": 0.15
+  },
+  "tiling": {
+    "development_sources_max": 200
+  },
+  "training": {
+    "optimizer_updates": 10000,
+    "micro_batch_size": 2,
+    "effective_batch_size": 4,
+    "learning_rate": 2e-05,
+    "weight_decay": 0.0001,
+    "warmup_optimizer_updates": 100,
+    "validation_every_optimizer_updates": 2000,
+    "num_workers": 4,
+    "gradient_clip_max_norm": 5.0,
+    "checkpoint_policy": "final_weights_only",
+    "selection_metric": "final_optimizer_update",
+    "parameter_precision": "fp32"
+  },
+  "mask_thresholds_validation_only": [
+    0.3,
+    0.2,
+    0.15,
+    0.1,
+    0.05
+  ],
+  "evaluation": {
+    "bootstrap_repetitions": 1000
+  },
+  "scope": "FP32 training AND inference control; same frozen job9276 folds, targets, source bytes and exact initial A/B values. Same 10000 updates, optimizer schedule and final-only policy. Both module-update probes and initial validation diagnostics precede either full training. ASF remains official, no identity/LR/sampling changes. Differences versus job9276 reflect the precision regime, not an isolated training-only effect. Single seed; no improvement guaranteed.",
+  "precision_control": {
+    "reference_run": "phase4_FULL_R1_official_train_GT_intersection_DBNet_vs_ASF_mixed_10000updates_final_weights_only_seed42_v2",
+    "reference_source_fingerprint": "8c4d37569b0f82fb72902f157d86eacb1919a99246da6e0e7d4af6cedc655861",
+    "master_sha256": "84cb32422f693f5da3a38a74f1663409b59db029fd44f8907d7d22273e86d671",
+    "protocol_sha256": "b20bc96ac675fbc6b7db4c03e6dd1fc66e8661ff2474772bb44498a5e3763958",
+    "split_sha256": {
+      "train": "ca1b91636cbe025823041ce336ffb59affa826a073f666dd7ba386bcab6c983d",
+      "validation": "5cbf2230b0f83ab30816aca8afc5cb466e0b3301030ccd25d7d6d62d3136dfff",
+      "test": "054f44643c7d3fa0006c8eb3e502c602953957c34cf957cc5d954dd04f4e079f",
+      "tiling_development": "334b435e806b3aa1be6164b1dd1cba04cae34ee40383aaa985f24a69e8cf2e84"
+    },
+    "ASF_initial_relative_path": "inputs/06_initialized_checkpoints/initial_detector__B_DBNet_plus_ASF__mixed_clean_degraded__from_same_original.pth",
+    "ASF_initial_sha256": "db4b8fd0b51ed0bf1a072307080a367d531dd155aa5cb6fdac7dc0c07ded8fd7",
+    "diagnostic_validation_sources": 16,
+    "reference_comparison_sha256": "36256242b14a2bb0465592885146fd5465c0e1fa7500e2058bec0bbad7f753cb"
+  }
+}

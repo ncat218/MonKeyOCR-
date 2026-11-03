@@ -84,12 +84,13 @@ def make_report(experiments, output, config, manifest, training, selections):
         for value in ci.values():
             value['hmean_delta_method_minus_control_pp'] = value.pop('hmean_delta_vs_E0_pp')
         differences[name] = dict(control=control, method=method, paired_source_bootstrap=ci)
-    save_json(output/'COMPARISON__DBNet_ASF_native_and_selected_masks__all_metrics_and_word_errors.json',
+    precision_tag = 'FP32_' if config.get('precision_control') else ''
+    save_json(output/('COMPARISON__'+precision_tag+'DBNet_ASF_native_and_selected_masks__all_metrics_and_word_errors.json'),
         dict(experiments=reports, comparisons=differences, training=training,
              validation_mask_selections=selections, configuration=config,
              warning='No result is guaranteed; calibration and architecture effects are separate. '
                      'Single training seed; official-train detection folds, TextOCR pretraining overlap.'))
-    csv_path = output/'TABLE__DBNet_vs_ASF__clean_degraded_Hmean_small_recall_FP_FN.csv'
+    csv_path = output/('TABLE__'+precision_tag+'DBNet_vs_ASF__clean_degraded_Hmean_small_recall_FP_FN.csv')
     with csv_path.open('w', encoding='utf-8', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0]))
         writer.writeheader()
@@ -115,6 +116,42 @@ def make_report(experiments, output, config, manifest, training, selections):
         '- Both models use weights at the same fixed final optimizer update. Validation tracks training and selects postprocessing masks, not model weights. No periodic/best/optimizer/interruption checkpoints are saved in this run.',
         '- One training seed; source-bootstrap intervals do not measure variability across training seeds. Old10k job7957 is historical context, not the control for this full-data experiment.',
         '- Inference timing shares one P-map forward across thresholds; see per-image timing notes and peak allocated VRAM summaries. No promise of a fixed ASF overhead.', '']
-    md = output/'RESULTS__FULL_R1_DBNet_ASF__small_words_corruptions_and_postprocessing.md'
+    if config.get('precision_control'):
+        lines[0] = '# FULL_R1 FP32 control: DBNet versus ASF, frozen job9276 initialization and folds'
+        lines += ['## FP32 control and automatic diagnostics', '',
+            '- Trainable parameter storage, Adam moments and forward tensors use FP32; backend TF32 flags are recorded in receipts. No autocast/BF16 parameter storage is enabled.',
+            '- A reuses the original detector values; B reuses the exact job9276 ASF initialization. No identity initialization, LR multiplier, extra updates or sampling change.',
+            '- Both real first-update probes and initial validation-subset diagnostics finish before either full training starts. Probe weights are discarded, never used as training initialization.',
+            '- Compare with job9276 as a training AND inference precision-regime change; it does not isolate training-rounding effects alone.',
+            '- See actual named-parameter update audits, fixed-subset initial/final attention diagnostics and correctly indexed validation scalars in the automatic delivery ZIP.',
+            '- Attention summaries include padding/background, are not GT-word-conditioned and do not independently prove the cause of small-word misses. Timings include diagnostic hooks for B.', '']
+        history = output.parent.parent/'inputs/02_shared_FULL_R1_official_train_TextVQA_TextOCR_word_GT/REFERENCE_RESULTS__job9276_BF16_regime.json'
+        if history.is_file():
+            old = read_json(history)['experiments']
+            comparisons = []
+            lines += ['## Native-mask comparison with the recorded BF16 run', '',
+                      '| Model | Old clean H | New FP32 clean H | Delta pp | Old degraded H | New FP32 degraded H | Delta pp |',
+                      '|---|---:|---:|---:|---:|---:|---:|']
+            for variant in VARIANTS:
+                label = variant+'__native_mask_0p30'
+                previous, current = old[label]['metrics'], reports[label]['metrics']
+                if previous['manifest_sha256'] != current['manifest_sha256']:
+                    raise ValueError('Historical/native comparison must use exactly the same test manifest')
+                record = dict(model=variant)
+                values = []
+                for condition,key in [('clean','clean_unique'),('degraded','degraded_instance')]:
+                    before,after=100*previous[key]['hmean'],100*current[key]['hmean']
+                    record.update({condition+'_old_H':before, condition+'_FP32_H':after,
+                                   condition+'_delta_pp':after-before})
+                    values += [before,after,after-before]
+                comparisons.append(record)
+                lines.append('| '+variant+' | '+' | '.join(f'{v:.3f}' for v in values)+' |')
+            path=output/'PRECISION_REGIMES__native_BF16_job9276_vs_FP32_same_test_and_initial_values.csv'
+            with path.open('w',encoding='utf-8',newline='') as f:
+                writer=csv.DictWriter(f,fieldnames=list(comparisons[0]));writer.writeheader();writer.writerows(comparisons)
+            lines += ['', 'Point differences above are not confidence intervals or multi-seed results. Small precision-regime gains need further uncertainty assessment.', '']
+        else:
+            lines += ['Historical report was unavailable; no old-versus-new metric difference was invented.', '']
+    md = output/('RESULTS__FULL_R1_'+precision_tag+'DBNet_ASF__small_words_corruptions_and_postprocessing.md')
     md.write_text('\n'.join(lines), encoding='utf-8')
     return dict(report=str(md), csv=str(csv_path))

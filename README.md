@@ -1,5 +1,19 @@
 # MonkeyOCRv2 Text Detection — FULL_R1 DBNet / ASF và Phase 3
 
+**Thí nghiệm tiếp theo: đối chứng FP32, giữ ASF và đúng initialization/split job9276.** Chưa có kết quả GPU của cấu hình mới. Không đổi LR, budget hay khởi tạo ASF trong phép đối chứng này. Hai nhánh đều phải qua kiểm tra actual optimizer update trước khi train dài; báo cáo và diagnostics được tự đóng ZIP khi xong.
+
+```bash
+git pull --ff-only origin main
+python run_all.py \
+  --config configs/phase4_full_textvqa_dbnet_vs_asf_FP32_control_job9276_h200_normal.json \
+  --dataset-parent /datastore/dungmt/textvqa/data/benchmark_v1/raw \
+  --workspace /datastore/dungmt/textvqa/Tuan/monkeyocr_workspace
+```
+
+**Giữ inputs/state/ASF initial của run job9276**, vì code mới tham chiếu read-only để không nhân đôi dữ liệu lớn. [Hướng dẫn FP32: một lệnh, preflight, output và cách đọc](docs/FULL_R1_FP32_CONTROL__ONE_COMMAND_SAME_JOB9276_INPUTS_AND_ASF_INITIALIZATION.md).
+
+## Lịch sử job9276 và các công cụ chẩn đoán
+
 **Suite mới chốt ngày 03/11/2026:** huấn luyện lại DBNet và DBNet+ASF trên cùng giao TextVQA official train / full degraded MAIN / TextOCR word GT; chia detection70/15/15 theo source/clean SHA. Hai nhánh mixed clean/degraded có cùng10.000 optimizer updates và chỉ lưu weights cuối; không checkpoint định kỳ/optimizer state. Run v2 mới tách khỏi v1/job9146 lỗi quota. Đánh giá ngưỡng native0.30 và ngưỡng chọn trên validation; giữ MonkeyOCRv2-AS, global inference, loss/shrink/unclip.
 
 **Job9276 đã hoàn tất:** `COMPLETED 0:0`, 6h09m44s. Giao hợp lệ21.747 source; detection train/val/test15.222/3.262/3.263. Cùng mask0.30, DBNet clean/degraded H64,62/41,55%; ASF56,39/38,78%. Đây là kết quả của cách thêm ASF mới và lịch fine-tune đã thử, chưa xác định nguyên nhân tụt điểm. Đang kiểm tra khởi tạo, lịch sử validation và precision của backbone trước khi kết luận về ASF.

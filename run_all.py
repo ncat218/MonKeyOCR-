@@ -59,8 +59,14 @@ def main():
             from monkey_textdet.full_data import read_metadata
             _, metadata_check = read_metadata(discovered)
             print('Verified FULL_R1 metadata before submission:', metadata_check['main_counts_by_official_split'])
+            if config.get('precision_control'):
+                from monkey_textdet.precision_control import pre_submit_reference
+                reference = pre_submit_reference(workspace, config)
+                print('FP32 control will read frozen job9276 inputs/ASF initialization:', reference)
         purpose = ('FULL_R1_DBNet_vs_ASF__mixed_training_validation_masks_test' if full_suite
                    else 'all_phase3_experiments')
+        if config.get('precision_control'):
+            purpose = 'FULL_R1_FP32_DBNet_vs_ASF__same_job9276_init__module_update_checks_train_validation_test'
         log_dir = workspace / config['run_name'] / 'logs' / 'slurm_all_experiments'
         log_dir.mkdir(parents=True, exist_ok=True)
         stamp = utc_stamp()
@@ -72,7 +78,9 @@ def main():
             command += ['--dataset-parent', dataset_parent]
         script.write_text('#!/bin/bash\nset -euo pipefail\ncd ' + shlex.quote(str(REPO)) +
                           '\nexec ' + shlex.join(command) + '\n', encoding='utf-8')
-        cmd = ['sbatch', '--parsable', '--job-name='+('monkey_FULL_R1_DBNet_ASF' if full_suite else 'monkey_phase3_all_E0_tiles_E1_E2'),
+        job_name = ('monkey_FP32_DBNet_ASF' if config.get('precision_control') else
+                    'monkey_FULL_R1_DBNet_ASF' if full_suite else 'monkey_phase3_all_E0_tiles_E1_E2')
+        cmd = ['sbatch', '--parsable', '--job-name='+job_name,
                '--ntasks=1',
                '--account=' + scheduler['account'], '--partition=' + scheduler['partition'],
                '--gres=' + scheduler['gres'], '--cpus-per-task=' + str(scheduler['cpus']),

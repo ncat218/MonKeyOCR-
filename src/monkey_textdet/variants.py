@@ -44,21 +44,35 @@ def initialize(a):
     set_random_seed(a.seed)
     model = MODELS.build(cfg.model)
     model.init_weights()
+    if cfg.get('textdet_parameter_precision') == 'fp32':
+        from .precision_control import enforce_fp32
+        enforce_fp32(model)
     state = torch.load(a.original, map_location='cpu', weights_only=False)
     source = state.get('state_dict', state)
     # The pinned checkpoint already passed strict loading in Phase1/3.
     added = initialization_key_audit(model.state_dict(), source, a.variant == VARIANTS[1])
-    combined = dict(model.state_dict())
-    combined.update(source)
+    reuse = getattr(a, 'reuse_initial', None)
+    if reuse:
+        if a.variant != VARIANTS[1] or reuse.resolve() != a.output.resolve():
+            raise ValueError('Reuse mode verifies the frozen ASF initialization in place; no overwrite/copy')
+        frozen = torch.load(reuse, map_location='cpu', weights_only=False)
+        combined = frozen.get('state_dict', frozen)
+    else:
+        combined = dict(model.state_dict())
+        combined.update(source)
     model.load_state_dict(combined, strict=True)
     loaded = model.state_dict()
+    if reuse:
+        for key, value in combined.items():
+            if not torch.equal(loaded[key].cpu(), value.cpu().to(loaded[key].dtype)):
+                raise ValueError('Frozen ASF initialization values changed: '+key)
     for key, value in source.items():
         if not torch.equal(loaded[key].cpu(), value.cpu().to(loaded[key].dtype)):
             raise ValueError('Shared weights changed during initialization: '+key)
     if a.verify_only:
         if a.variant != VARIANTS[0] or a.output.resolve() != a.original.resolve():
             raise ValueError('Verify-only mode reuses only the original noASF detector')
-    else:
+    elif not reuse:
         if a.output.resolve() == a.original.resolve():
             raise ValueError('Never overwrite the original checkpoint')
         a.output.parent.mkdir(parents=True, exist_ok=True)
@@ -68,6 +82,8 @@ def initialize(a):
     save_json(a.receipt, dict(variant=a.variant, original_checkpoint_sha256=sha256(a.original),
         initialized_checkpoint_sha256=sha256(a.output), shared_keys_verified=len(source),
         reused_original_without_duplicate_checkpoint=a.verify_only,
+        reused_frozen_ASF_initialization=bool(reuse),
+        model_parameter_precision=cfg.get('textdet_parameter_precision', 'native'),
         newly_initialized_keys=added, initialization_seed=a.seed,
         total_parameters=sum(p.numel() for p in model.parameters()),
         new_ASF_parameters=sum(p.numel() for k,p in model.named_parameters() if k in added),
@@ -82,4 +98,5 @@ if __name__ == '__main__':
     p.add_argument('--variant', choices=VARIANTS, required=True)
     p.add_argument('--seed', type=int, required=True)
     p.add_argument('--verify-only', action='store_true')
+    p.add_argument('--reuse-initial', type=Path)
     initialize(p.parse_args())

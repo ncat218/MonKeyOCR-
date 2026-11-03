@@ -44,6 +44,8 @@ def make_training_config(official,backbone,original_checkpoint,annotations,proto
     cfg.model.backbone.model_dir=str(backbone)
     cfg.model.backbone.weights=str(backbone/'model.safetensors')
     cfg.model.backbone['freeze']=False
+    from .precision_control import apply_precision
+    apply_precision(cfg, t.get('parameter_precision', 'native'))
     cfg.custom_imports=dict(imports=['monkey_textdet.mmocr_plugins'],allow_failed_imports=False)
     train_pipeline=cfg.train_dataloader.dataset.pipeline
     val_pipeline=cfg.val_dataloader.dataset.pipeline
@@ -78,6 +80,8 @@ def make_training_config(official,backbone,original_checkpoint,annotations,proto
     cfg.default_hooks=dict(timer=dict(type='IterTimerHook'),logger=dict(type='LoggerHook',interval=25),
         param_scheduler=dict(type='ParamSchedulerHook'),sampler_seed=dict(type='DistSamplerSeedHook'),
         checkpoint=checkpoint_settings(t, schedule))
+    if t.get('parameter_precision') == 'fp32':
+        cfg.default_hooks.logger['log_metric_by_epoch'] = False
     cfg.custom_hooks=[dict(type='FiniteLossAndInterruptCheckpointHook',accumulation=schedule['accumulation'],
         save_interrupt_checkpoint=t.get('checkpoint_policy') != 'final_weights_only')]
     cfg.visualizer=dict(type='TextDetLocalVisualizer',vis_backends=[dict(type='LocalVisBackend')],name='visualizer')
@@ -102,8 +106,14 @@ def run(a):
     a.work_dir.mkdir(parents=True,exist_ok=True)
     run_identity=dict(experiment=a.experiment,config_sha256=sha256(a.config),initial_checkpoint_sha256=sha256(a.initial_checkpoint),
                       training_source_sha256=sha256(__file__),plugins_sha256=sha256(Path(__file__).with_name('mmocr_plugins.py')))
+    if cfg.get('textdet_parameter_precision') == 'fp32':
+        from .precision_control import runtime_math_flags
+        run_identity['runtime_math_flags'] = runtime_math_flags()
     locked_json(a.work_dir/'immutable_training_identity.json',run_identity)
     torch.cuda.reset_peak_memory_stats()
+    if a.probe_only and cfg.get('textdet_parameter_precision') == 'fp32':
+        from .fp32_checks import run_optimizer_probe
+        return run_optimizer_probe(cfg, a)
     if a.probe_only:
         from mmocr.registry import MODELS
         model=MODELS.build(cfg.model)
@@ -141,8 +151,14 @@ def run(a):
     runner=Runner.from_cfg(cfg)
     # Strictly verify initialization, including unused heads, before MMEngine's resume/load flow.
     runner.model.init_weights()
+    if cfg.get('textdet_parameter_precision') == 'fp32':
+        from .precision_control import enforce_fp32
+        enforce_fp32(runner.model)
     load_checkpoint(runner.model,str(a.initial_checkpoint),map_location='cpu',strict=True)
     runner.train()
+    if cfg.get('textdet_parameter_precision') == 'fp32':
+        from .fp32_checks import save_final_update_audit
+        save_final_update_audit(runner.model, a.initial_checkpoint, a.work_dir)
     candidates = ([a.work_dir/cfg.default_hooks.checkpoint.filename_tmpl.format(runner.iter)]
                   if final_only else sorted(a.work_dir.glob('best_*.pth')))
     if len(candidates)!=1 or not candidates[0].is_file():
@@ -153,6 +169,8 @@ def run(a):
         checkpoint_selection=('fixed final optimizer update; no best-validation weight selection' if final_only else
                               'maximum validation mean(clean Hmean,degraded Hmean); fixed native postprocessing'),
         checkpoint_policy='final_weights_only' if final_only else 'periodic_and_best',
+        parameter_precision=cfg.get('textdet_parameter_precision', 'native'),
+        runtime_math_flags=run_identity.get('runtime_math_flags'),
         iterations_completed=runner.iter,optimizer_updates=runner.iter//cfg.optim_wrapper.accumulative_counts,
         peak_allocated_gpu_mib=torch.cuda.max_memory_allocated()/1024**2,
         resumed_from=str(checkpoint) if cfg.resume else None)
