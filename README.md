@@ -2,6 +2,21 @@
 
 **Suite mới chốt ngày 03/11/2026:** huấn luyện lại DBNet và DBNet+ASF trên cùng giao TextVQA official train / full degraded MAIN / TextOCR word GT; chia detection70/15/15 theo source/clean SHA. Hai nhánh mixed clean/degraded có cùng10.000 optimizer updates và chỉ lưu weights cuối; không checkpoint định kỳ/optimizer state. Run v2 mới tách khỏi v1/job9146 lỗi quota. Đánh giá ngưỡng native0.30 và ngưỡng chọn trên validation; giữ MonkeyOCRv2-AS, global inference, loss/shrink/unclip.
 
+**Job9276 đã hoàn tất:** `COMPLETED 0:0`, 6h09m44s. Giao hợp lệ21.747 source; detection train/val/test15.222/3.262/3.263. Cùng mask0.30, DBNet clean/degraded H64,62/41,55%; ASF56,39/38,78%. Đây là kết quả của cách thêm ASF mới và lịch fine-tune đã thử, chưa xác định nguyên nhân tụt điểm. Đang kiểm tra khởi tạo, lịch sử validation và precision của backbone trước khi kết luận về ASF.
+
+**Lấy bằng chứng từ run đã xong — không chạy lại suite:**
+
+```bash
+git pull --ff-only origin main
+python scripts/collect_full_r1_asf_training_diagnostics.py \
+  --workspace /datastore/dungmt/textvqa/Tuan/monkeyocr_workspace \
+  --job-id 9276
+```
+
+Gửi ZIP tại dòng `ZIP_TO_SEND`. [Chi tiết dữ liệu gom, giới hạn và cách đọc](docs/JOB9276__COLLECT_ASF_INITIALIZATION_AND_TRAINING_EVIDENCE.md). Công cụ chỉ đọc bằng chứng có sẵn và tạo ZIP mới; không dùng GPU hoặc xóa file.
+
+**Lệnh dưới đây dùng khi chủ động chạy/resume suite, không dùng để lấy logs:**
+
 ```bash
 git pull --ff-only origin main
 python run_all.py \
@@ -14,7 +29,7 @@ Tự submit **một job normal/mig2-35**, tái dùng stack đã xác minh. Datas
 
 [Hướng dẫn cập nhật, chạy, xem logs và gửi kết quả FULL_R1](docs/FULL_R1_DBNet_vs_ASF__UPDATE_RUN_MONITOR_AND_READ_RESULTS.md).
 
-**Trạng thái suite ASF:** kiểm thử CPU/config/controller; chưa chạy training/inference ASF thật trên H200. Job sẽ kiểm tra tải weights, gradient và native P-map equivalence trước khi dùng kết quả. Không bảo đảm trước ASF cải thiện chữ nhỏ.
+**Giới hạn bằng chứng:** báo cáo job9276 đã có training/inference thật; chưa có phép đo attention/feature norms hoặc tỷ lệ trọng số backbone thực sự đổi. `freeze=False`, probe gradient hữu hạn và job thành công không thay thế các phép đo này. Chưa có E0 checkpoint gốc trên đúng full test trong bảng A/B.
 
 ## Suite Phase 3 cũ — giữ để tái lập
 
@@ -28,7 +43,7 @@ python run_all.py
 
 Nếu chạy lệnh ở login node có Slurm, chương trình **tự submit đúng một job `normal`** và in job ID cùng đường dẫn logs. Khi job được cấp GPU, toàn bộ các bước bên dưới chạy tự động trong allocation đó. Nếu đã ở trong Slurm GPU allocation, chương trình chạy trực tiếp. Không cần gọi riêng setup, audit, inference, train hay evaluation.
 
-**Trạng thái Phase3:** Tuấn đã chạy job7957 trên HPC, `COMPLETED 0:0` trong2h17m02s với bộ10K cũ; E0/global, E0/2×2, E1 và E2 đã có kết quả. Điều này không phải xác nhận suite ASF mới đã chạy. Kiểm thử orchestration dùng worker giả chỉ kiểm tra luồng điều khiển, không tạo evidence model thật.
+**Trạng thái Phase3:** Tuấn đã chạy job7957 trên HPC, `COMPLETED 0:0` trong2h17m02s với bộ10K cũ; E0/global, E0/2×2, E1 và E2 đã có kết quả. Đây là kết quả lịch sử; đối chứng full A/B ở job9276 được báo riêng ở đầu trang. Kiểm thử orchestration dùng worker giả chỉ kiểm tra luồng điều khiển, không tạo evidence model thật.
 
 ## Lấy code và khai báo dữ liệu
 
