@@ -84,7 +84,7 @@
   },
   "icdar_historical_anchor": {
     "relative_path": "configs/references/ICDAR2015_original_Monkey__verified_historical_500_image_EDA.json",
-    "sha256": "f9b455da1642e509e73ec9ef2858192292c01b1907309c96c3fcdae75bab3daf",
+    "sha256": "2306ee63feea4383c839947651abf767d5a88bba69d0d7e110aed49741ac58b1",
     "provenance": "Original Phase1 saved predictions; official GT ZIP SHA256 8f434c410cfcf680b8421e3c22abf31b9297d8e255c3b13acc2890fddc6db6b0; reconstructed annotation SHA256 fd1a9d52dbd2b3ed86a16fef27cda35e4c44624d07c4f1c25338ea2ca660f718; separately verified CPU EDA 2026-11-04. Historical greedy evaluator and historical test score sweep; not re-run in FP32."
   }
 }

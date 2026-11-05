@@ -101,6 +101,11 @@ def completed_reference(root):
 
 
 class BaselineEDA(unittest.TestCase):
+    def test_published_historical_anchor_hash_matches_cross_platform_checkout(self):
+        cfg=read_json(REPO/'configs/phase5_full_r1_E0_vs_Aprime_FP32_inference_EDA_h200_normal.json')
+        ref=cfg['icdar_historical_anchor']
+        self.assertEqual(sha256(REPO/ref['relative_path']),ref['sha256'])
+
     def test_geometry_partition_merge_and_invalid_fp_follow_vendor_eligibility(self):
         gt=dict(valid=[dict(ann_id=str(i),original_height=10,geometry=mapping(box(x,10,x+10,20)))
                        for i,x in enumerate((10,22,60))],ignored=[dict(geometry=mapping(box(80,50,99,70)))])
