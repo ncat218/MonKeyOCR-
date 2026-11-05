@@ -1,0 +1,90 @@
+{
+  "scheduler": {
+    "auto_submit": true,
+    "account": "uit",
+    "partition": "normal",
+    "qos": "mig2-35",
+    "gres": "gpu:2g.35gb:1",
+    "cpus": 8,
+    "ram_gb": 40,
+    "walltime": "12:00:00"
+  },
+  "environment": {
+    "cuda_home": "",
+    "allow_recorded_cuda12_minor_mismatch": true,
+    "auto_install_private_cuda128_if_missing": true,
+    "build_jobs": 4
+  },
+  "data": {
+    "dataset_subdirectories": {
+      "clean_json": "textvqa_clean",
+      "textocr_json": "textocr_0_1_train_json",
+      "main_image_manifest": "full_textvqa_degraded"
+    },
+    "excluded_dataset_directories": [
+      "textvqa_degraded",
+      "textvqa_degraded_10k"
+    ],
+    "clean_json": "",
+    "textocr_json": "",
+    "main_image_manifest": "",
+    "clean_images_root": "",
+    "degraded_root": "",
+    "require_verified_phase2_manifest": false
+  },
+  "seed": 42,
+  "dataset_parent": "",
+  "workspace_root": "",
+  "mask_thresholds_validation_only": [
+    0.3,
+    0.2,
+    0.15,
+    0.1,
+    0.05
+  ],
+  "evaluation": {
+    "bootstrap_repetitions": 1000
+  },
+  "suite": "full_r1_original_E0_vs_Aprime_FP32_inference_and_EDA_only",
+  "run_name": "phase5_FULL_R1_E0_original_vs_Aprime_FP32_job9793__inference_EDA_native_selected_seed42_v1",
+  "eda": {
+    "review_words_max": 32,
+    "review_max_side": 640
+  },
+  "reference_job9793": {
+    "run_name": "phase4_FULL_R1_FP32_DBNet_vs_ASF_same_job9276_initialization_10000updates_final_only_seed42_v1",
+    "source_fingerprint": "ccd1865ef1c6801fbc6a9d39edb729b45d9ce803ed3eff852e6f4004cb03e104",
+    "checkpoint_sha256": "2524c36ed9fd0c9a4691a481cb79231a2451a95e2eddb67a91845550f7cb13af",
+    "master_sha256": "84cb32422f693f5da3a38a74f1663409b59db029fd44f8907d7d22273e86d671",
+    "protocol_sha256": "b20bc96ac675fbc6b7db4c03e6dd1fc66e8661ff2474772bb44498a5e3763958",
+    "split_sha256": {
+      "train": "ca1b91636cbe025823041ce336ffb59affa826a073f666dd7ba386bcab6c983d",
+      "validation": "5cbf2230b0f83ab30816aca8afc5cb466e0b3301030ccd25d7d6d62d3136dfff",
+      "test": "054f44643c7d3fa0006c8eb3e502c602953957c34cf957cc5d954dd04f4e079f"
+    },
+    "source_counts": {
+      "train": 15222,
+      "validation": 3262,
+      "test": 3263
+    },
+    "small_file_sha256": {
+      "COMPLETE__FULL_R1_DBNet_ASF_training_threshold_selection_and_test_finished.json": "94c32b58aa3bdd069017c91182aed4652570493022a63c6e6ad46657a7d03dc8",
+      "inputs/02_shared_FULL_R1_official_train_TextVQA_TextOCR_word_GT/REFERENCE__job9276_frozen_inputs_and_image_hashes.json": "e9ca73504c9a7aeb3e3e9aa5245d9cd43a91f632683a1b7a868b4e3f9cce31e8",
+      "inputs/05_model_configs__only_FPNC_ASF_differs/inference__A_DBNet_noASF__mixed_clean_degraded__native_global_resolution.py": "94e4edd820b7cb8faca4a9414928af76f5a4f9cb225812fabad13eec74269899",
+      "outputs/validation_selection/SELECTED_MASK__A_DBNet_noASF__mixed_clean_degraded__validation_only.json": "175d43a26042953484528b04ac7d7d32e94db58af730d45ad6ceac5b353c07b5",
+      "outputs/FINAL_COMPARISON__FULL_R1_DBNet_vs_ASF__native_and_validation_selected_masks/COMPARISON__FP32_DBNet_ASF_native_and_selected_masks__all_metrics_and_word_errors.json": "ddbe2e3097e25e547db9f122ba647c3538386f987b37c810b3678ff14840c00b",
+      "run_configuration__FULL_R1_two_architectures_same_budget.json": "14cde48772821efa1488e1875292d20a8dca0a4ac32bd22d6467341c4c618c68"
+    },
+    "runtime_math_flags": {
+      "cuda_matmul_allow_tf32": false,
+      "cudnn_allow_tf32": true,
+      "float32_matmul_precision": "highest",
+      "note": "FP32 parameter storage is verified separately; backend TF32 flags are recorded, not silently equated to parameter dtype."
+    }
+  },
+  "icdar_historical_anchor": {
+    "relative_path": "configs/references/ICDAR2015_original_Monkey__verified_historical_500_image_EDA.json",
+    "sha256": "f9b455da1642e509e73ec9ef2858192292c01b1907309c96c3fcdae75bab3daf",
+    "provenance": "Original Phase1 saved predictions; official GT ZIP SHA256 8f434c410cfcf680b8421e3c22abf31b9297d8e255c3b13acc2890fddc6db6b0; reconstructed annotation SHA256 fd1a9d52dbd2b3ed86a16fef27cda35e4c44624d07c4f1c25338ea2ca660f718; separately verified CPU EDA 2026-11-04. Historical greedy evaluator and historical test score sweep; not re-run in FP32."
+  }
+}

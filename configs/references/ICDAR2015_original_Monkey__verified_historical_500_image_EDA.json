@@ -1,0 +1,271 @@
+{
+  "images": 500,
+  "raw_predictions": 3872,
+  "valid_gt": 2077,
+  "ignored_gt": 3153,
+  "metric_reproduction_passed": true,
+  "original_report": {
+    "precision": 0.9129113924050632,
+    "recall": 0.8680789600385171,
+    "hmean": 0.8899308983218164
+  },
+  "recomputed_at_historical_selected_threshold": {
+    "score_threshold": 0.6000000000000001,
+    "tp": 1803,
+    "gt": 2077,
+    "predictions": 1975,
+    "fp": 172,
+    "fn": 274,
+    "precision": 0.9129113924050632,
+    "recall": 0.8680789600385171,
+    "hmean": 0.8899308983218164
+  },
+  "threshold_scope": "The score threshold is inherited from historical Phase1 test sweep. Not tuned anew or transferable to TextVQA. Future development selects parameters on validation only.",
+  "size_definitions": {
+    "primary": "Axis-aligned bbox height in original image, matches historical TextVQA definition.",
+    "sensitivity": "Average lengths of GT quadrilateral edges 1-2 and 3-0; annotation orientation, not rotation-invariant short side.",
+    "resized": "Estimated using configured 4068/1024 keep-ratio bounds; not measured encoder stride or effective resolution."
+  },
+  "summaries": {
+    "bbox_size_bin": [
+      {
+        "group": "small_lt16",
+        "gt": 137,
+        "tp": 124,
+        "fn": 13,
+        "recall": 0.9051094890510949,
+        "share_of_all_GT": 0.06596051998074146,
+        "share_of_all_FN": 0.04744525547445255
+      },
+      {
+        "group": "medium_16to32",
+        "gt": 826,
+        "tp": 739,
+        "fn": 87,
+        "recall": 0.8946731234866828,
+        "share_of_all_GT": 0.39768897448242657,
+        "share_of_all_FN": 0.3175182481751825
+      },
+      {
+        "group": "large_ge32",
+        "gt": 1114,
+        "tp": 940,
+        "fn": 174,
+        "recall": 0.8438061041292639,
+        "share_of_all_GT": 0.536350505536832,
+        "share_of_all_FN": 0.635036496350365
+      }
+    ],
+    "bbox_fine_bin": [
+      {
+        "group": "8to12",
+        "gt": 22,
+        "tp": 18,
+        "fn": 4,
+        "recall": 0.8181818181818182,
+        "share_of_all_GT": 0.01059220028887819,
+        "share_of_all_FN": 0.014598540145985401
+      },
+      {
+        "group": "12to16",
+        "gt": 115,
+        "tp": 106,
+        "fn": 9,
+        "recall": 0.9217391304347826,
+        "share_of_all_GT": 0.05536831969186327,
+        "share_of_all_FN": 0.032846715328467155
+      },
+      {
+        "group": "16to32",
+        "gt": 826,
+        "tp": 739,
+        "fn": 87,
+        "recall": 0.8946731234866828,
+        "share_of_all_GT": 0.39768897448242657,
+        "share_of_all_FN": 0.3175182481751825
+      },
+      {
+        "group": "ge32",
+        "gt": 1114,
+        "tp": 940,
+        "fn": 174,
+        "recall": 0.8438061041292639,
+        "share_of_all_GT": 0.536350505536832,
+        "share_of_all_FN": 0.635036496350365
+      }
+    ],
+    "annotated_edge_size_bin": [
+      {
+        "group": "small_lt16",
+        "gt": 316,
+        "tp": 284,
+        "fn": 32,
+        "recall": 0.8987341772151899,
+        "share_of_all_GT": 0.15214251324025035,
+        "share_of_all_FN": 0.11678832116788321
+      },
+      {
+        "group": "medium_16to32",
+        "gt": 1015,
+        "tp": 914,
+        "fn": 101,
+        "recall": 0.9004926108374385,
+        "share_of_all_GT": 0.4886856042368801,
+        "share_of_all_FN": 0.3686131386861314
+      },
+      {
+        "group": "large_ge32",
+        "gt": 746,
+        "tp": 605,
+        "fn": 141,
+        "recall": 0.8109919571045576,
+        "share_of_all_GT": 0.3591718825228695,
+        "share_of_all_FN": 0.5145985401459854
+      }
+    ],
+    "annotated_edge_fine_bin": [
+      {
+        "group": "4to8",
+        "gt": 1,
+        "tp": 0,
+        "fn": 1,
+        "recall": 0.0,
+        "share_of_all_GT": 0.00048146364949446316,
+        "share_of_all_FN": 0.0036496350364963502
+      },
+      {
+        "group": "8to12",
+        "gt": 77,
+        "tp": 68,
+        "fn": 9,
+        "recall": 0.8831168831168831,
+        "share_of_all_GT": 0.03707270101107366,
+        "share_of_all_FN": 0.032846715328467155
+      },
+      {
+        "group": "12to16",
+        "gt": 238,
+        "tp": 216,
+        "fn": 22,
+        "recall": 0.907563025210084,
+        "share_of_all_GT": 0.11458834857968224,
+        "share_of_all_FN": 0.08029197080291971
+      },
+      {
+        "group": "16to32",
+        "gt": 1015,
+        "tp": 914,
+        "fn": 101,
+        "recall": 0.9004926108374385,
+        "share_of_all_GT": 0.4886856042368801,
+        "share_of_all_FN": 0.3686131386861314
+      },
+      {
+        "group": "ge32",
+        "gt": 746,
+        "tp": 605,
+        "fn": 141,
+        "recall": 0.8109919571045576,
+        "share_of_all_GT": 0.3591718825228695,
+        "share_of_all_FN": 0.5145985401459854
+      }
+    ],
+    "tilt_bin": [
+      {
+        "group": "15to45",
+        "gt": 337,
+        "tp": 293,
+        "fn": 44,
+        "recall": 0.8694362017804155,
+        "share_of_all_GT": 0.16225324987963408,
+        "share_of_all_FN": 0.16058394160583941
+      },
+      {
+        "group": "ge45",
+        "gt": 11,
+        "tp": 6,
+        "fn": 5,
+        "recall": 0.5454545454545454,
+        "share_of_all_GT": 0.005296100144439095,
+        "share_of_all_FN": 0.01824817518248175
+      },
+      {
+        "group": "lt15",
+        "gt": 1729,
+        "tp": 1504,
+        "fn": 225,
+        "recall": 0.869866975130133,
+        "share_of_all_GT": 0.8324506499759268,
+        "share_of_all_FN": 0.8211678832116789
+      }
+    ],
+    "density_bin": [
+      {
+        "group": "0to5",
+        "gt": 1038,
+        "tp": 896,
+        "fn": 142,
+        "recall": 0.8631984585741811,
+        "share_of_all_GT": 0.4997592681752528,
+        "share_of_all_FN": 0.5182481751824818
+      },
+      {
+        "group": "6to10",
+        "gt": 754,
+        "tp": 651,
+        "fn": 103,
+        "recall": 0.863395225464191,
+        "share_of_all_GT": 0.36302359171882526,
+        "share_of_all_FN": 0.3759124087591241
+      },
+      {
+        "group": "ge11",
+        "gt": 285,
+        "tp": 256,
+        "fn": 29,
+        "recall": 0.8982456140350877,
+        "share_of_all_GT": 0.137217140105922,
+        "share_of_all_FN": 0.10583941605839416
+      }
+    ]
+  },
+  "GT_eligibility_by_bbox_height": {
+    "ignored": {
+      "medium_16to32": 1398,
+      "small_lt16": 731,
+      "large_ge32": 1024
+    },
+    "valid": {
+      "large_ge32": 1114,
+      "small_lt16": 137,
+      "medium_16to32": 826
+    }
+  },
+  "FN_categories": {
+    "FN_no_selected_prediction_with_IoU_ge0p1": 131,
+    "FN_overlap_below_IoU_requirement": 117,
+    "FN_candidate_removed_by_historical_score_cutoff": 26
+  },
+  "FP_categories": {
+    "FP_overlap_below_IoU_requirement": 109,
+    "FP_no_valid_GT_with_IoU_ge0p1": 63
+  },
+  "small_FN_categories": {
+    "FN_no_selected_prediction_with_IoU_ge0p1": 9,
+    "FN_overlap_below_IoU_requirement": 2,
+    "FN_candidate_removed_by_historical_score_cutoff": 2
+  },
+  "FN_geometric_signatures": {
+    "multi_word_half_coverage_candidate": 62,
+    "multiple_subhalf_fragments_union_ge_half": 8,
+    "selected_single_prediction_covers_ge_half_GT_but_no_match": 82,
+    "note": "Overlapping signatures, not a partition. Coverage>=.5 diagnostics do not replace official IoU>.5 matching; no root cause inferred."
+  },
+  "limitations": [
+    "All ignored ### words are excluded from recall; they are not successful detections or false negatives.",
+    "Error categories are overlap/score diagnostics, not causal explanations or visual labels.",
+    "No full raw image set locally; blur/contrast/occlusion human labels not assigned.",
+    "ICDAR test is a reproduction/diagnostic anchor, never a new training or hyperparameter-selection set.",
+    "Different datasets/protocols prevent attributing cross-dataset Hmean differences solely to generalization."
+  ]
+}

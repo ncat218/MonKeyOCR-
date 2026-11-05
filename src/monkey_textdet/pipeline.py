@@ -11,6 +11,9 @@ from .common import Processes,StageState,identity,jsonl,locked_json,read_json,sa
 
 
 def validate_config(cfg):
+    if cfg.get('suite') == 'full_r1_original_E0_vs_Aprime_FP32_inference_and_EDA_only':
+        from .baseline_suite import validate
+        return validate(cfg)
     if cfg.get('suite') == 'full_r1_dbnet_vs_asf_and_validation_mask_sweep':
         from .asf_suite import validate
         return validate(cfg)
@@ -42,6 +45,9 @@ def code_fingerprint(repo):
 
 
 def run(a):
+    if read_json(a.config).get('suite') == 'full_r1_original_E0_vs_Aprime_FP32_inference_and_EDA_only':
+        from .baseline_suite import run as run_baseline_eda
+        return run_baseline_eda(a)
     if read_json(a.config).get('suite') == 'full_r1_dbnet_vs_asf_and_validation_mask_sweep':
         from .asf_suite import run as run_full
         return run_full(a)

@@ -55,7 +55,8 @@ def main():
         from monkey_textdet.data import discover_inputs
         discovered=discover_inputs(dataset_parent,config['data'],exclude=[workspace,REPO])
         full_suite = config.get('suite') == 'full_r1_dbnet_vs_asf_and_validation_mask_sweep'
-        if full_suite:
+        baseline_eda = config.get('suite') == 'full_r1_original_E0_vs_Aprime_FP32_inference_and_EDA_only'
+        if full_suite or baseline_eda:
             from monkey_textdet.full_data import read_metadata
             _, metadata_check = read_metadata(discovered)
             print('Verified FULL_R1 metadata before submission:', metadata_check['main_counts_by_official_split'])
@@ -63,10 +64,16 @@ def main():
                 from monkey_textdet.precision_control import pre_submit_reference
                 reference = pre_submit_reference(workspace, config)
                 print('FP32 control will read frozen job9276 inputs/ASF initialization:', reference)
+            if baseline_eda:
+                from monkey_textdet.baseline_reference import reference_files
+                reference = reference_files(workspace, config)
+                print('Inference/EDA only: original E0 forward passes; reuse verified A-prime job9793:', reference)
         purpose = ('FULL_R1_DBNet_vs_ASF__mixed_training_validation_masks_test' if full_suite
                    else 'all_phase3_experiments')
         if config.get('precision_control'):
             purpose = 'FULL_R1_FP32_DBNet_vs_ASF__same_job9276_init__module_update_checks_train_validation_test'
+        if baseline_eda:
+            purpose = 'FULL_R1_E0_original_vs_Aprime_FP32__inference_only_word_errors_and_review_crops'
         log_dir = workspace / config['run_name'] / 'logs' / 'slurm_all_experiments'
         log_dir.mkdir(parents=True, exist_ok=True)
         stamp = utc_stamp()
@@ -80,6 +87,8 @@ def main():
                           '\nexec ' + shlex.join(command) + '\n', encoding='utf-8')
         job_name = ('monkey_FP32_DBNet_ASF' if config.get('precision_control') else
                     'monkey_FULL_R1_DBNet_ASF' if full_suite else 'monkey_phase3_all_E0_tiles_E1_E2')
+        if baseline_eda:
+            job_name = 'monkey_E0_Aprime_EDA'
         cmd = ['sbatch', '--parsable', '--job-name='+job_name,
                '--ntasks=1',
                '--account=' + scheduler['account'], '--partition=' + scheduler['partition'],

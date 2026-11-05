@@ -1,16 +1,19 @@
-# MonkeyOCRv2 Text Detection — FULL_R1 DBNet / ASF và Phase 3
+# MonkeyOCRv2 Text Detection — E0 baseline và FULL_R1 EDA
 
-**Thí nghiệm tiếp theo: đối chứng FP32, giữ ASF và đúng initialization/split job9276.** Chưa có kết quả GPU của cấu hình mới. Không đổi LR, budget hay khởi tạo ASF trong phép đối chứng này. Hai nhánh đều phải qua kiểm tra actual optimizer update trước khi train dài; báo cáo và diagnostics được tự đóng ZIP khi xong.
+**Lượt hiện tại: E0 checkpoint Monkey gốc trên FULL_R1, đối chiếu A′ FP32 job9793.** Chỉ inference/EDA, không train, không thêm ASF và không tạo lại ảnh. Job9793 đã hoàn tất; nhánh no-ASF FP32 là đối chứng fine-tune, không phải baseline gốc.
 
 ```bash
 git pull --ff-only origin main
 python run_all.py \
-  --config configs/phase4_full_textvqa_dbnet_vs_asf_FP32_control_job9276_h200_normal.json \
+  --config configs/phase5_full_r1_E0_vs_Aprime_FP32_inference_EDA_h200_normal.json \
   --dataset-parent /datastore/dungmt/textvqa/data/benchmark_v1/raw \
   --workspace /datastore/dungmt/textvqa/Tuan/monkeyocr_workspace
 ```
 
-**Giữ inputs/state/ASF initial của run job9276**, vì code mới tham chiếu read-only để không nhân đôi dữ liệu lớn. [Hướng dẫn FP32: một lệnh, preflight, output và cách đọc](docs/FULL_R1_FP32_CONTROL__ONE_COMMAND_SAME_JOB9276_INPUTS_AND_ASF_INITIALIZATION.md).
+Một job H200 normal/MIG 2g.35gb. **Giữ inputs của job9276 và inputs/state/raw predictions của job9793.** Code đọc lại chúng và ghi vào run Phase5 mới. Không cần tải ảnh về máy Windows.
+
+[Hướng dẫn chạy, tên output và cách kiểm tra](docs/FULL_R1_E0_ORIGINAL_VS_APRIME_FP32__ONE_JOB_INFERENCE_EDA.md).
+Có notebook khởi chạy cùng một lệnh: `H200__E0_original_vs_Aprime_FP32__FULL_R1_inference_EDA.ipynb` (chạy trên server HPC).
 
 ## Lịch sử job9276 và các công cụ chẩn đoán
 
